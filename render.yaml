@@ -1,0 +1,29 @@
+# Render Blueprint for TeleVault
+# Using Neon DB for PostgreSQL (free forever)
+services:
+  # Backend API
+  - type: web
+    name: televault-backend
+    env: docker
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    plan: free
+    region: oregon
+    healthCheckPath: /health
+    # Increase timeouts for large file uploads
+    autoDeploy: true
+    # Note: Render free tier has a 30-second request timeout limit
+    # For larger files, consider upgrading to paid tier
+    envVars:
+      - key: PORT
+        value: 8000
+      - key: DATABASE_URL
+        sync: false  # Add your Neon DB URL here
+      - key: TELEGRAM_BOT_TOKENS
+        sync: false
+      - key: JWT_SECRET_KEY
+        generateValue: true
+      - key: SECRET_KEY
+        generateValue: true
+      - key: CORS_ORIGINS
+        value: http://localhost:5173

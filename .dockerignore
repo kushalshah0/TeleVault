@@ -1,0 +1,20 @@
+# Ignore for Docker builds
+**/.git
+**/.github
+**/.vscode
+**/__pycache__
+**/*.pyc
+**/*.pyo
+**/*.pyd
+**/.pytest_cache
+**/.coverage
+**/venv
+**/env
+**/node_modules
+**/frontend
+**/.env
+**/*.log
+README.md
+.gitignore
+docker-compose.yml
+*.md
