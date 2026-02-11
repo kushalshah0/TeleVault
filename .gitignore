@@ -63,3 +63,5 @@ frontend/.env.production
 PROJECT_STRUCTURE.txt
 RENDER_DEPLOY.md
 DOCKER_GUIDE.md
+vm.txt
+scripts/
