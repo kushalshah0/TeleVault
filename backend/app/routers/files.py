@@ -296,7 +296,7 @@ async def delete_file(
             )
         except Exception as e:
             # Log but continue deletion
-            print(f"Failed to delete chunk {chunk.id}: {e}")
+            pass
     
     # Log file deletion before deleting (async - non-blocking)
     file_name = file.name

@@ -1,0 +1,194 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model activities {
+  id            Int          @id @default(autoincrement())
+  user_id       Int
+  username      String
+  description   String
+  storage_id    Int?
+  storage_name  String?
+  file_id       Int?
+  file_name     String?
+  folder_id     Int?
+  folder_name   String?
+  extra_data    String?
+  created_at    DateTime     @default(now())
+  activity_type ActivityType
+  storages      storages?    @relation(fields: [storage_id], references: [id], onDelete: Cascade)
+  users         users        @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@index([activity_type])
+  @@index([created_at], map: "ix_activities_created_at")
+  @@index([file_id], map: "ix_activities_file_id")
+  @@index([folder_id], map: "ix_activities_folder_id")
+  @@index([storage_id], map: "ix_activities_storage_id")
+  @@index([user_id], map: "ix_activities_user_id")
+  @@index([username], map: "ix_activities_username")
+}
+
+model file_chunks {
+  id                       Int      @id @default(autoincrement())
+  file_id                  Int
+  chunk_index              Int
+  chunk_size               Int
+  telegram_message_id      BigInt
+  telegram_file_id         String
+  telegram_bot_token_index Int
+  created_at               DateTime @default(now())
+  files                    files    @relation(fields: [file_id], references: [id], onDelete: Cascade)
+
+  @@index([chunk_index])
+  @@index([file_id], map: "ix_file_chunks_file_id")
+}
+
+model files {
+  id          Int           @id @default(autoincrement())
+  name        String
+  size        BigInt
+  mime_type   String?
+  storage_id  Int
+  folder_id   Int?
+  created_at  DateTime      @default(now())
+  file_chunks file_chunks[]
+  folders     folders?      @relation(fields: [folder_id], references: [id])
+  storages    storages      @relation(fields: [storage_id], references: [id], onDelete: Cascade)
+
+  @@index([folder_id], map: "ix_files_folder_id")
+  @@index([name], map: "ix_files_name")
+  @@index([storage_id], map: "ix_files_storage_id")
+}
+
+model folders {
+  id            Int       @id @default(autoincrement())
+  name          String
+  path          String
+  storage_id    Int
+  parent_id     Int?
+  created_at    DateTime  @default(now())
+  files         files[]
+  folders       folders?  @relation("foldersTofolders", fields: [parent_id], references: [id], onDelete: Cascade)
+  other_folders folders[] @relation("foldersTofolders")
+  storages      storages  @relation(fields: [storage_id], references: [id], onDelete: Cascade)
+
+  @@index([parent_id])
+  @@index([name], map: "ix_folders_name")
+  @@index([path], map: "ix_folders_path")
+  @@index([storage_id], map: "ix_folders_storage_id")
+}
+
+model refresh_tokens {
+  id         Int      @id @default(autoincrement())
+  token      String   @unique(map: "ix_refresh_tokens_token")
+  user_id    Int
+  expires_at DateTime
+  created_at DateTime @default(now())
+  revoked    Boolean  @default(false)
+  users      users    @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@index([user_id], map: "ix_refresh_tokens_user_id")
+  @@index([token])
+}
+
+model storage_permissions {
+  id         Int      @id @default(autoincrement())
+  storage_id Int
+  user_id    Int
+  granted_at DateTime @default(now())
+  role       UserRole @default(VIEWER)
+  storages   storages @relation(fields: [storage_id], references: [id], onDelete: Cascade)
+  users      users    @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@unique([storage_id, user_id])
+  @@index([storage_id], map: "ix_storage_permissions_storage_id")
+  @@index([user_id], map: "ix_storage_permissions_user_id")
+}
+
+model storages {
+  id                  Int                   @id @default(autoincrement())
+  name                String
+  telegram_channel_id String                @unique(map: "ix_storages_telegram_channel_id")
+  owner_id            Int
+  created_at          DateTime              @default(now())
+  activities          activities[]
+  files               files[]
+  folders             folders[]
+  storage_permissions storage_permissions[]
+  users               users                 @relation(fields: [owner_id], references: [id], onDelete: Cascade)
+
+  @@index([name], map: "ix_storages_name")
+  @@index([owner_id])
+  @@index([telegram_channel_id])
+}
+
+model users {
+  id                  Int                   @id @default(autoincrement())
+  username            String                @unique(map: "ix_users_username")
+  email               String                @unique(map: "ix_users_email")
+  hashed_password     String
+  is_active           Boolean               @default(true)
+  created_at          DateTime              @default(now())
+  activities          activities[]
+  refresh_tokens      refresh_tokens[]
+  storage_permissions storage_permissions[]
+  storages            storages[]
+
+  @@index([email])
+  @@index([username])
+}
+
+enum ActivityType {
+  LOGIN
+  LOGOUT
+  REGISTER
+  STORAGE_CREATE
+  STORAGE_DELETE
+  STORAGE_VIEW
+  FOLDER_CREATE
+  FOLDER_DELETE
+  FOLDER_OPEN
+  FILE_UPLOAD
+  FILE_DOWNLOAD
+  FILE_DELETE
+  FILE_PREVIEW
+  FILE_RENAME
+  PERMISSION_GRANT
+  PERMISSION_REVOKE
+}
+
+enum UserRole {
+  VIEWER
+  EDITOR
+  ADMIN
+}
+
+enum activitytype {
+  LOGIN
+  LOGOUT
+  REGISTER
+  STORAGE_CREATE
+  STORAGE_DELETE
+  STORAGE_VIEW
+  FOLDER_CREATE
+  FOLDER_DELETE
+  FOLDER_OPEN
+  FILE_UPLOAD
+  FILE_DOWNLOAD
+  FILE_DELETE
+  FILE_PREVIEW
+  FILE_RENAME
+  PERMISSION_GRANT
+  PERMISSION_REVOKE
+}
+
+enum userrole {
+  VIEWER
+  EDITOR
+  ADMIN
+}

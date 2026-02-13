@@ -1,40 +1,68 @@
-import { useState } from 'react';
-import { Button, Card, Input, Modal, Dropdown, Badge } from './ui';
+'use client'
 
-function StorageSettings({ storage, isOpen, onClose, onUpdate }) {
-  const [activeTab, setActiveTab] = useState('general');
-  const [members, setMembers] = useState([
+import { useState } from 'react';
+import { Button, Card, Input, Modal, Dropdown, DropdownItem, Badge } from './ui';
+
+interface Member {
+  id: number;
+  username: string;
+  email: string;
+  role: 'admin' | 'editor' | 'viewer';
+}
+
+interface Role {
+  value: string;
+  label: string;
+  description: string;
+}
+
+interface Storage {
+  id: number;
+  name: string;
+  telegram_channel_id: string;
+}
+
+interface StorageSettingsProps {
+  storage: Storage;
+  isOpen: boolean;
+  onClose: () => void;
+  onUpdate?: () => void;
+}
+
+function StorageSettings({ storage, isOpen, onClose, onUpdate }: StorageSettingsProps) {
+  const [activeTab, setActiveTab] = useState<'general' | 'access'>('general');
+  const [members, setMembers] = useState<Member[]>([
     { id: 1, username: 'john_doe', email: 'john@example.com', role: 'admin' },
     { id: 2, username: 'jane_smith', email: 'jane@example.com', role: 'editor' },
     { id: 3, username: 'bob_wilson', email: 'bob@example.com', role: 'viewer' },
   ]);
   const [inviteEmail, setInviteEmail] = useState('');
 
-  const roles = [
+  const roles: Role[] = [
     { value: 'viewer', label: 'Viewer', description: 'Can view and download files' },
     { value: 'editor', label: 'Editor', description: 'Can upload, download, and delete files' },
     { value: 'admin', label: 'Admin', description: 'Full control over storage' },
   ];
 
-  const handleRoleChange = (memberId, newRole) => {
-    setMembers(members.map(m => m.id === memberId ? { ...m, role: newRole } : m));
+  const handleRoleChange = (memberId: number, newRole: string) => {
+    setMembers(members.map(m => m.id === memberId ? { ...m, role: newRole as 'admin' | 'editor' | 'viewer' } : m));
     // TODO: Call API to update role
   };
 
-  const handleRemoveMember = (memberId) => {
+  const handleRemoveMember = (memberId: number) => {
     if (confirm('Remove this member from the storage?')) {
       setMembers(members.filter(m => m.id !== memberId));
       // TODO: Call API to remove member
     }
   };
 
-  const handleInvite = (e) => {
+  const handleInvite = (e: React.FormEvent) => {
     e.preventDefault();
     setInviteEmail('');
     // TODO: Call API to send invite
   };
 
-  const getRoleBadgeVariant = (role) => {
+  const getRoleBadgeVariant = (role: string): string => {
     switch (role) {
       case 'admin': return 'bg-red-100 text-red-700 dark:bg-red-900/20 dark:text-red-400';
       case 'editor': return 'bg-blue-100 text-blue-700 dark:bg-blue-900/20 dark:text-blue-400';
@@ -56,21 +84,19 @@ function StorageSettings({ storage, isOpen, onClose, onUpdate }) {
           <nav className="flex space-x-4">
             <button
               onClick={() => setActiveTab('general')}
-              className={`px-4 py-2 font-medium border-b-2 transition-colors ${
-                activeTab === 'general'
-                  ? 'border-primary-500 text-primary-600 dark:text-primary-400'
-                  : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
-              }`}
+              className={`px-4 py-2 font-medium border-b-2 transition-colors ${activeTab === 'general'
+                ? 'border-primary-500 text-primary-600 dark:text-primary-400'
+                : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
+                }`}
             >
               General
             </button>
             <button
               onClick={() => setActiveTab('access')}
-              className={`px-4 py-2 font-medium border-b-2 transition-colors ${
-                activeTab === 'access'
-                  ? 'border-primary-500 text-primary-600 dark:text-primary-400'
-                  : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
-              }`}
+              className={`px-4 py-2 font-medium border-b-2 transition-colors ${activeTab === 'access'
+                ? 'border-primary-500 text-primary-600 dark:text-primary-400'
+                : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
+                }`}
             >
               Access Control
             </button>
@@ -93,7 +119,7 @@ function StorageSettings({ storage, isOpen, onClose, onUpdate }) {
               helperText="Channel ID cannot be changed after creation"
             />
             <div className="flex gap-3 pt-4">
-              <Button variant="danger">Delete Storage</Button>
+              <Button variant="destructive">Delete Storage</Button>
             </div>
           </div>
         )}
@@ -114,7 +140,7 @@ function StorageSettings({ storage, isOpen, onClose, onUpdate }) {
                     onChange={(e) => setInviteEmail(e.target.value)}
                     className="flex-1"
                   />
-                  <Button type="submit" icon="📧">
+                  <Button type="submit">
                     Invite
                   </Button>
                 </form>
@@ -144,7 +170,7 @@ function StorageSettings({ storage, isOpen, onClose, onUpdate }) {
                           </p>
                         </div>
                       </div>
-                      
+
                       <div className="flex items-center gap-3">
                         <Dropdown
                           trigger={
@@ -153,12 +179,17 @@ function StorageSettings({ storage, isOpen, onClose, onUpdate }) {
                               <span className="ml-1">▼</span>
                             </button>
                           }
-                          items={roles.map(role => ({
-                            label: role.label,
-                            onClick: () => handleRoleChange(member.id, role.value),
-                          }))}
-                        />
-                        
+                        >
+                          {roles.map(role => (
+                            <DropdownItem
+                              key={role.value}
+                              onClick={() => handleRoleChange(member.id, role.value)}
+                            >
+                              {role.label}
+                            </DropdownItem>
+                          ))}
+                        </Dropdown>
+
                         {member.role !== 'admin' && (
                           <Button
                             size="sm"

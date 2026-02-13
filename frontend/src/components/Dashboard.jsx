@@ -185,7 +185,7 @@ function Dashboard({ onStorageCreated }) {
                       { 
                         icon: '🗑️', 
                         label: 'Delete', 
-                        onClick: () => console.log('Delete storage'),
+                        onClick: () => {},
                         danger: true 
                       },
                     ]}
