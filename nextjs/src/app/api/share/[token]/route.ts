@@ -66,8 +66,6 @@ export async function GET(
         created_by: fileShare.users.username,
         created_at: fileShare.created_at,
         expires_at: fileShare.expires_at,
-        max_downloads: fileShare.max_downloads,
-        download_count: fileShare.download_count,
       })
     }
 

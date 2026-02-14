@@ -327,12 +327,6 @@ export default function SharePage() {
                   {isExpired && ' (Expired)'}
                 </span>
               </div>
-              <div className="flex items-center justify-between py-2 px-4 bg-gray-50 dark:bg-gray-700/30 rounded-lg">
-                <span className="text-sm text-gray-500 dark:text-gray-400">Downloads</span>
-                <span className="text-sm font-medium text-gray-900 dark:text-white">
-                  {fileInfo?.download_count || 0}{fileInfo?.max_downloads ? ` / ${fileInfo.max_downloads}` : ' / ∞'}
-                </span>
-              </div>
             </div>
 
             {requiresPassword && (
