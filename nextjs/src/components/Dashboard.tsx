@@ -38,10 +38,10 @@ function Dashboard({ onStorageCreated, storages: initialStorages = [], onRefresh
     setStorages(initialStorages);
   }, [initialStorages]);
 
-  const loadStorages = async () => {
+  const loadStorages = async (skipCache = false) => {
     // Delegate to parent component's refresh function
     if (onRefresh) {
-      await onRefresh();
+      await onRefresh(skipCache);
     }
   };
 
@@ -130,7 +130,7 @@ function Dashboard({ onStorageCreated, storages: initialStorages = [], onRefresh
       setShowRenameModal(false);
       setSelectedStorage(null);
       setRenameValue('');
-      await loadStorages();
+      await loadStorages(true);
     } catch (error: any) {
       console.error('Rename error:', error);
       toast.error(error.message || 'Failed to rename storage');
