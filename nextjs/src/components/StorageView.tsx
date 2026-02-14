@@ -57,6 +57,7 @@ function StorageView({ onFileOperation, searchQuery, searchTrigger, onClearSearc
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [storage, setStorage] = useState<Storage | null>(null);
+  const [userRole, setUserRole] = useState<string>('VIEWER');
   const [folders, setFolders] = useState<any[]>([]);
   const [files, setFiles] = useState<any[]>([]);
   const [currentFolder, setCurrentFolder] = useState<number | null>(null);
@@ -214,6 +215,7 @@ function StorageView({ onFileOperation, searchQuery, searchTrigger, onClearSearc
       // ⚡ OPTIMIZATION: Fetch storage with folders and files in one call
       const response = await storageAPI.get(storageId);
       setStorage(response.data);
+      setUserRole(response.data.userRole || 'VIEWER');
 
       // Use the data from storage response (avoid duplicate fetch)
       if (response.data.folders && response.data.files) {
@@ -699,24 +701,34 @@ function StorageView({ onFileOperation, searchQuery, searchTrigger, onClearSearc
         { icon: '🔗', label: 'Share', onClick: () => { setSharingFile({ id: item.id, name: item.name }); setShowShareModal(true); } }
       );
 
-      // Add Edit option for text files
-      if (isTextFile(item)) {
+      // Add Edit option for text files (only for owner, admin, editor)
+      if (isTextFile(item) && ['OWNER', 'ADMIN', 'EDITOR'].includes(userRole)) {
         menuItems.push(
           { icon: '✏️', label: 'Edit', onClick: () => handleEditFile(item) }
         );
       }
 
-      menuItems.push(
-        { divider: true },
-        { icon: '🗑️', label: 'Delete', onClick: () => confirmFileDelete(item.id, item.name), danger: true }
-      );
+      // Add Delete option (only for owner, admin, editor)
+      if (['OWNER', 'ADMIN', 'EDITOR'].includes(userRole)) {
+        menuItems.push(
+          { divider: true },
+          { icon: '🗑️', label: 'Delete', onClick: () => confirmFileDelete(item.id, item.name), danger: true }
+        );
+      }
     } else if (type === 'folder') {
-      menuItems.push(
-        { icon: '✏️', label: 'Rename', onClick: () => showRenameDialog(item, 'folder') },
-        { icon: '👁️', label: 'Open', onClick: () => handleFolderOpen(item) },
-        { divider: true },
-        { icon: '🗑️', label: 'Delete', onClick: () => confirmFolderDelete(item.id, item.name), danger: true }
-      );
+      // Add Rename and Delete (only for owner, admin, editor)
+      if (['OWNER', 'ADMIN', 'EDITOR'].includes(userRole)) {
+        menuItems.push(
+          { icon: '✏️', label: 'Rename', onClick: () => showRenameDialog(item, 'folder') },
+          { icon: '👁️', label: 'Open', onClick: () => handleFolderOpen(item) },
+          { divider: true },
+          { icon: '🗑️', label: 'Delete', onClick: () => confirmFolderDelete(item.id, item.name), danger: true }
+        );
+      } else {
+        menuItems.push(
+          { icon: '👁️', label: 'Open', onClick: () => handleFolderOpen(item) }
+        );
+      }
     }
 
     showContextMenu(e, { item, type, menuItems });
@@ -1137,8 +1149,8 @@ function StorageView({ onFileOperation, searchQuery, searchTrigger, onClearSearc
                   </button>
                 )}
 
-                {/* Edit Button - Only for single text file */}
-                {selectionCount === 1 && selectedItems[0].type === 'file' && isTextFile(selectedItems[0]) && (
+                {/* Edit Button - Only for single text file and owner/admin/editor */}
+                {selectionCount === 1 && selectedItems[0].type === 'file' && isTextFile(selectedItems[0]) && ['OWNER', 'ADMIN', 'EDITOR'].includes(userRole) && (
                   <button
                     onClick={() => handleEditFile(selectedItems[0])}
                     className="p-1.5 sm:p-2 hover:bg-primary-100 dark:hover:bg-primary-800 rounded-lg 
@@ -1184,8 +1196,8 @@ function StorageView({ onFileOperation, searchQuery, searchTrigger, onClearSearc
                   </button>
                 )}
 
-                {/* Rename Button - Only for single item */}
-                {selectionCount === 1 && (
+                {/* Rename Button - Only for single item and owner/admin/editor */}
+                {selectionCount === 1 && ['OWNER', 'ADMIN', 'EDITOR'].includes(userRole) && (
                   <button
                     onClick={() => showRenameDialog(selectedItems[0], selectedItems[0].type ?? 'file')}
                     className="p-2 hover:bg-primary-100 dark:hover:bg-primary-800 rounded-lg 
@@ -1213,65 +1225,67 @@ function StorageView({ onFileOperation, searchQuery, searchTrigger, onClearSearc
                   </button>
                 )}
 
-                {/* Delete Button - For all selections */}
-                <button
-                  onClick={async () => {
-                    // For bulk delete, delete each item with progress
-                    if (selectionCount > 1) {
-                      setDeleting(true);
-                      setDeleteProgress({ current: 0, total: selectionCount, itemName: '' });
+                {/* Delete Button - For all selections and owner/admin/editor */}
+                {['OWNER', 'ADMIN', 'EDITOR'].includes(userRole) && (
+                  <button
+                    onClick={async () => {
+                      // For bulk delete, delete each item with progress
+                      if (selectionCount > 1) {
+                        setDeleting(true);
+                        setDeleteProgress({ current: 0, total: selectionCount, itemName: '' });
 
-                      for (let i = 0; i < selectedItems.length; i++) {
-                        const item = selectedItems[i];
-                        setDeleteProgress({ current: i + 1, total: selectionCount, itemName: item.name });
+                        for (let i = 0; i < selectedItems.length; i++) {
+                          const item = selectedItems[i];
+                          setDeleteProgress({ current: i + 1, total: selectionCount, itemName: item.name });
 
-                        try {
-                          if (item.type === 'file') {
-                            await fileAPI.delete(storageId, item.id, currentFolder);
-                          } else {
-                            await folderAPI.delete(storageId, item.id);
+                          try {
+                            if (item.type === 'file') {
+                              await fileAPI.delete(storageId, item.id, currentFolder);
+                            } else {
+                              await folderAPI.delete(storageId, item.id);
+                            }
+                            // Small delay to show progress
+                            await new Promise(resolve => setTimeout(resolve, 100));
+                          } catch (error) {
+                            console.error(`Failed to delete ${item.name}:`, error);
                           }
-                          // Small delay to show progress
-                          await new Promise(resolve => setTimeout(resolve, 100));
-                        } catch (error) {
-                          console.error(`Failed to delete ${item.name}:`, error);
+                        }
+
+                        // Clear delete progress and selection before loading
+                        setDeleting(false);
+                        setDeleteProgress({ current: 0, total: 0, itemName: '' });
+                        clearSelection();
+
+                        await refreshData();
+                        onFileOperation?.();
+                      } else {
+                        // Single item - show confirmation modal
+                        const firstItem = selectedItems[0];
+                        if (firstItem.type === 'file') {
+                          confirmFileDelete(firstItem.id, firstItem.name ?? '');
+                        } else {
+                          confirmFolderDelete(firstItem.id, firstItem.name ?? '');
                         }
                       }
-
-                      // Clear delete progress and selection before loading
-                      setDeleting(false);
-                      setDeleteProgress({ current: 0, total: 0, itemName: '' });
-                      clearSelection();
-
-                      await refreshData();
-                      onFileOperation?.();
-                    } else {
-                      // Single item - show confirmation modal
-                      const firstItem = selectedItems[0];
-                      if (firstItem.type === 'file') {
-                        confirmFileDelete(firstItem.id, firstItem.name ?? '');
-                      } else {
-                        confirmFolderDelete(firstItem.id, firstItem.name ?? '');
-                      }
-                    }
-                  }}
-                  disabled={deleting}
-                  className="p-1.5 sm:p-2 hover:bg-red-100 dark:hover:bg-red-900/20 rounded-lg 
-                    transition-colors text-red-600 dark:text-red-400 disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0"
-                  title="Delete"
-                >
-                  {deleting ? (
-                    <svg className="w-4 h-4 sm:w-5 sm:h-5 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                        d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                    </svg>
-                  ) : (
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                    </svg>
-                  )}
-                </button>
+                    }}
+                    disabled={deleting}
+                    className="p-1.5 sm:p-2 hover:bg-red-100 dark:hover:bg-red-900/20 rounded-lg 
+                      transition-colors text-red-600 dark:text-red-400 disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0"
+                    title="Delete"
+                  >
+                    {deleting ? (
+                      <svg className="w-4 h-4 sm:w-5 sm:h-5 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                          d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                      </svg>
+                    ) : (
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                          d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                      </svg>
+                    )}
+                  </button>
+                )}
               </div>
             </div>
 
