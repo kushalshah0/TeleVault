@@ -151,6 +151,7 @@ model users {
   email               String                @unique(map: "ix_users_email")
   hashed_password     String
   is_active           Boolean               @default(true)
+  is_admin            Boolean               @default(false)
   created_at          DateTime              @default(now())
   activities          activities[]
   refresh_tokens      refresh_tokens[]

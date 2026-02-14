@@ -30,9 +30,10 @@ interface StorageSettingsProps {
   onClose: () => void;
   onUpdate?: () => void;
   onDelete?: () => void;
+  userRole?: string;
 }
 
-function StorageSettings({ storage, isOpen, onClose, onUpdate, onDelete }: StorageSettingsProps) {
+function StorageSettings({ storage, isOpen, onClose, onUpdate, onDelete, userRole = 'VIEWER' }: StorageSettingsProps) {
   const [activeTab, setActiveTab] = useState<'general' | 'access'>('general');
   const [storageName, setStorageName] = useState(storage?.name || '');
   const [saving, setSaving] = useState(false);
@@ -41,9 +42,10 @@ function StorageSettings({ storage, isOpen, onClose, onUpdate, onDelete }: Stora
   
   const [members, setMembers] = useState<Member[]>([]);
   const [loadingMembers, setLoadingMembers] = useState(false);
-  const [inviteEmail, setInviteEmail] = useState('');
-  const [inviting, setInviting] = useState(false);
-  const [inviteError, setInviteError] = useState('');
+  const [addEmail, setAddEmail] = useState('');
+  const [addRole, setAddRole] = useState<'viewer' | 'editor' | 'admin'>('viewer');
+  const [adding, setAdding] = useState(false);
+  const [addError, setAddError] = useState('');
   const [updatingRoleId, setUpdatingRoleId] = useState<number | null>(null);
   const [removingId, setRemovingId] = useState<number | null>(null);
 
@@ -141,12 +143,11 @@ function StorageSettings({ storage, isOpen, onClose, onUpdate, onDelete }: Stora
     }
   };
 
-  const handleInvite = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!inviteEmail.trim() || inviting || !storage) return;
+  const handleAddUser = async () => {
+    if (!addEmail.trim() || adding || !storage) return;
 
-    setInviting(true);
-    setInviteError('');
+    setAdding(true);
+    setAddError('');
     
     try {
       const token = localStorage.getItem('accessToken')
@@ -156,22 +157,23 @@ function StorageSettings({ storage, isOpen, onClose, onUpdate, onDelete }: Stora
           'Content-Type': 'application/json',
           ...(token ? { Authorization: `Bearer ${token}` } : {})
         },
-        body: JSON.stringify({ email: inviteEmail.trim() })
+        body: JSON.stringify({ email: addEmail.trim(), role: addRole })
       })
 
       const data = await response.json()
 
       if (!response.ok) {
-        throw new Error(data.error || 'Failed to invite member')
+        throw new Error(data.error || 'Failed to add user')
       }
 
       setMembers(prev => [data, ...prev])
-      setInviteEmail('')
+      setAddEmail('')
+      setAddRole('viewer')
     } catch (error: any) {
-      console.error('Invite error:', error)
-      setInviteError(error.message || 'Failed to invite member')
+      console.error('Add user error:', error)
+      setAddError(error.message || 'Failed to add user')
     } finally {
-      setInviting(false)
+      setAdding(false)
     }
   };
 
@@ -264,58 +266,65 @@ function StorageSettings({ storage, isOpen, onClose, onUpdate, onDelete }: Stora
             >
               General
             </button>
-            <button
-              onClick={() => setActiveTab('access')}
-              className={`px-4 py-2 font-medium border-b-2 transition-colors ${activeTab === 'access'
-                ? 'border-primary-500 text-primary-600 dark:text-primary-400'
-                : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
-                }`}
-            >
-              Access Control
-            </button>
+            {userRole === 'OWNER' && (
+              <button
+                onClick={() => setActiveTab('access')}
+                className={`px-4 py-2 font-medium border-b-2 transition-colors ${activeTab === 'access'
+                  ? 'border-primary-500 text-primary-600 dark:text-primary-400'
+                  : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
+                  }`}
+              >
+                Access Control
+              </button>
+            )}
           </nav>
         </div>
 
         {activeTab === 'general' && (
           <div className="space-y-6">
-            <form onSubmit={handleRename} className="space-y-4">
-              <Input
-                label="Storage Name"
-                value={storageName}
-                onChange={(e) => setStorageName(e.target.value)}
-                placeholder="Enter storage name"
-              />
-              <div className="flex gap-3">
-                <Button type="submit" disabled={saving || !storageName.trim()}>
-                  {saving ? 'Saving...' : 'Save Changes'}
-                </Button>
-              </div>
-            </form>
-
-            <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
-              <Input
-                label="Telegram Channel ID"
-                value={storage?.telegram_channel_id}
-                placeholder="-1001234567890"
-                disabled
-                helperText="Channel ID cannot be changed after creation"
-              />
-            </div>
-
-            <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
-              {!showDeleteConfirm ? (
-                <Button
-                  variant="destructive"
-                  onClick={() => setShowDeleteConfirm(true)}
-                >
-                  Delete Storage
-                </Button>
-              ) : (
-                <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
-                  <p className="text-sm text-red-600 dark:text-red-400 mb-3">
-                    Are you sure you want to delete this storage? This action cannot be undone and all files will be permanently deleted.
-                  </p>
+            {userRole === 'OWNER' && (
+              <>
+                <form onSubmit={handleRename} className="space-y-4">
+                  <Input
+                    label="Storage Name"
+                    value={storageName}
+                    onChange={(e) => setStorageName(e.target.value)}
+                    placeholder="Enter storage name"
+                  />
                   <div className="flex gap-3">
+                    <Button type="submit" disabled={saving || !storageName.trim()}>
+                      {saving ? 'Saving...' : 'Save Changes'}
+                    </Button>
+                  </div>
+                </form>
+
+                <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
+                  <Input
+                    label="Telegram Channel ID"
+                    value={storage?.telegram_channel_id}
+                    placeholder="-1001234567890"
+                    disabled
+                    helperText="Channel ID cannot be changed after creation"
+                  />
+                </div>
+              </>
+            )}
+
+            {userRole === 'OWNER' && (
+              <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
+                {!showDeleteConfirm ? (
+                  <Button
+                    variant="destructive"
+                    onClick={() => setShowDeleteConfirm(true)}
+                  >
+                    Delete Storage
+                  </Button>
+                ) : (
+                  <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
+                    <p className="text-sm text-red-600 dark:text-red-400 mb-3">
+                      Are you sure you want to delete this storage? This action cannot be undone and all files will be permanently deleted.
+                    </p>
+                    <div className="flex gap-3">
                     <Button
                       variant="destructive"
                       onClick={handleDelete}
@@ -338,34 +347,48 @@ function StorageSettings({ storage, isOpen, onClose, onUpdate, onDelete }: Stora
 
         {activeTab === 'access' && (
           <div className="space-y-6">
-            <Card>
-              <div className="p-4">
-                <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-4">
-                  Invite Members
-                </h3>
-                <form onSubmit={handleInvite} className="space-y-3">
-                  <Input
-                    placeholder="Enter email address"
-                    value={inviteEmail}
-                    onChange={(e) => {
-                      setInviteEmail(e.target.value)
-                      setInviteError('')
-                    }}
-                    className="flex-1"
-                  />
-                  {inviteError && (
-                    <p className="text-sm text-red-500">{inviteError}</p>
-                  )}
-                  <Button type="submit" disabled={inviting || !inviteEmail.trim()}>
-                    {inviting ? 'Inviting...' : 'Invite'}
-                  </Button>
-                </form>
+            <Card className="p-4">
+              <div className="flex gap-3 items-start">
+                <Input
+                  placeholder="Enter email address"
+                  value={addEmail}
+                  onChange={(e) => {
+                    setAddEmail(e.target.value)
+                    setAddError('')
+                  }}
+                  className="flex-1"
+                />
+                <Dropdown
+                  trigger={
+                    <button className="px-3 py-2 h-10 rounded-lg border border-border bg-background text-foreground flex items-center gap-2 hover:bg-accent">
+                      {addRole.charAt(0).toUpperCase() + addRole.slice(1)}
+                      <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                      </svg>
+                    </button>
+                  }
+                >
+                  {roles.map(role => (
+                    <DropdownItem
+                      key={role.value}
+                      onClick={() => setAddRole(role.value as 'viewer' | 'editor' | 'admin')}
+                    >
+                      {role.label}
+                    </DropdownItem>
+                  ))}
+                </Dropdown>
+                <Button onClick={handleAddUser} disabled={adding || !addEmail.trim()} className="h-10">
+                  {adding ? '...' : 'Add'}
+                </Button>
               </div>
+              {addError && (
+                <p className="text-sm text-red-500 mt-2">{addError}</p>
+              )}
             </Card>
 
             <div>
               <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-4">
-                Members ({members.length})
+                Users ({members.length})
               </h3>
               {loadingMembers ? (
                 <div className="text-center py-8 text-gray-500">Loading...</div>
@@ -398,7 +421,7 @@ function StorageSettings({ storage, isOpen, onClose, onUpdate, onDelete }: Stora
                                 className={`px-3 py-1.5 rounded-lg text-sm font-medium flex items-center gap-1 ${getRoleBadgeVariant(member.role)} ${updatingRoleId === member.id ? 'opacity-50' : ''}`}
                                 disabled={updatingRoleId === member.id}
                               >
-                                {member.role}
+                                {member.role.charAt(0).toUpperCase() + member.role.slice(1)}
                                 <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                                 </svg>
