@@ -72,6 +72,7 @@ function StorageView({ onFileOperation, searchQuery, searchTrigger, onClearSearc
   const [deleteProgress, setDeleteProgress] = useState<ProgressState>({ current: 0, total: 0, itemName: '' });
   const [isSearching, setIsSearching] = useState(false);
   const [searchLoading, setSearchLoading] = useState(false);
+  const lastLoadedFolderRef = useRef<number | null>(null);
   const [searchResults, setSearchResults] = useState<SearchResults>({ folders: [], files: [] });
   const [uploadQueue, setUploadQueue] = useState<ProgressState>({ current: 0, total: 0 });
   const [uploadingFiles, setUploadingFiles] = useState<UploadingFile[]>([]);
@@ -150,8 +151,9 @@ function StorageView({ onFileOperation, searchQuery, searchTrigger, onClearSearc
 
   useEffect(() => {
     // Load contents when folder changes (after initial load)
-    // Skip if this is the initial load (already handled above)
-    if (hasInitialLoad.current && storage) {
+    // Skip if this is the initial load (already handled above) or if folder hasn't changed
+    if (hasInitialLoad.current && storage && currentFolder !== lastLoadedFolderRef.current) {
+      lastLoadedFolderRef.current = currentFolder;
       loadContents(currentFolder);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -877,8 +879,18 @@ function StorageView({ onFileOperation, searchQuery, searchTrigger, onClearSearc
             {currentFolder !== null && (
               <button
                 onClick={() => {
-                  // Use browser back button - works with URL navigation!
-                  router.back();
+                  // Navigate back using folder path
+                  if (folderPath.length > 1) {
+                    const previousFolder = folderPath[folderPath.length - 2];
+                    setCurrentFolder(previousFolder.id);
+                    setFolderPath(folderPath.slice(0, -1));
+                    router.push(`/storage/${storageId}?folder=${previousFolder.id}`);
+                  } else {
+                    // Go to root
+                    setCurrentFolder(null);
+                    setFolderPath([]);
+                    router.push(`/storage/${storageId}`);
+                  }
                 }}
                 className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-foreground bg-secondary hover:bg-accent rounded-lg transition-colors flex-shrink-0"
                 title="Go back"
