@@ -5,7 +5,7 @@
 
 import { apiCache, cacheKeys, invalidateCache } from './apiCache'
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_APP_URL || ''
+const API_BASE_URL = ''
 
 interface RequestOptions extends Omit<RequestInit, 'cache'> {
   token?: string
