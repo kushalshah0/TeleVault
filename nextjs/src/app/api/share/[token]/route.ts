@@ -24,6 +24,12 @@ export async function GET(
               orderBy: { chunk_index: 'asc' }
             }
           }
+        },
+        users: {
+          select: {
+            username: true,
+            email: true
+          }
         }
       }
     })
@@ -57,6 +63,11 @@ export async function GET(
         size: Number(fileShare.files.size),
         mime_type: fileShare.files.mime_type,
         has_password: hasPassword,
+        created_by: fileShare.users.username,
+        created_at: fileShare.created_at,
+        expires_at: fileShare.expires_at,
+        max_downloads: fileShare.max_downloads,
+        download_count: fileShare.download_count,
       })
     }
 
