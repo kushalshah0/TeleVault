@@ -2,7 +2,7 @@
  * API client utilities
  */
 
-const API_BASE = process.env.NEXT_PUBLIC_APP_URL || ''
+const API_BASE = ''
 
 interface RequestOptions extends RequestInit {
   token?: string
