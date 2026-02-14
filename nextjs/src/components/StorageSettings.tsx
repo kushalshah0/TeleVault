@@ -27,10 +27,15 @@ interface StorageSettingsProps {
   isOpen: boolean;
   onClose: () => void;
   onUpdate?: () => void;
+  onDelete?: () => void;
 }
 
-function StorageSettings({ storage, isOpen, onClose, onUpdate }: StorageSettingsProps) {
+function StorageSettings({ storage, isOpen, onClose, onUpdate, onDelete }: StorageSettingsProps) {
   const [activeTab, setActiveTab] = useState<'general' | 'access'>('general');
+  const [storageName, setStorageName] = useState(storage?.name || '');
+  const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [members, setMembers] = useState<Member[]>([
     { id: 1, username: 'john_doe', email: 'john@example.com', role: 'admin' },
     { id: 2, username: 'jane_smith', email: 'jane@example.com', role: 'editor' },
@@ -43,6 +48,60 @@ function StorageSettings({ storage, isOpen, onClose, onUpdate }: StorageSettings
     { value: 'editor', label: 'Editor', description: 'Can upload, download, and delete files' },
     { value: 'admin', label: 'Admin', description: 'Full control over storage' },
   ];
+
+  const handleRename = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!storageName.trim() || saving) return;
+
+    setSaving(true);
+    try {
+      const token = localStorage.getItem('accessToken')
+      const response = await fetch(`/api/storages/${storage.id}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {})
+        },
+        body: JSON.stringify({ name: storageName.trim() })
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to rename storage')
+      }
+
+      onUpdate?.()
+      onClose()
+    } catch (error) {
+      console.error('Rename error:', error)
+    } finally {
+      setSaving(false)
+    }
+  };
+
+  const handleDelete = async () => {
+    if (deleting) return;
+
+    setDeleting(true);
+    try {
+      const token = localStorage.getItem('accessToken')
+      const response = await fetch(`/api/storages/${storage.id}`, {
+        method: 'DELETE',
+        headers: token ? { Authorization: `Bearer ${token}` } : {}
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to delete storage')
+      }
+
+      onDelete?.()
+      onClose()
+    } catch (error) {
+      console.error('Delete error:', error)
+    } finally {
+      setDeleting(false)
+      setShowDeleteConfirm(false)
+    }
+  };
 
   const handleRoleChange = (memberId: number, newRole: string) => {
     setMembers(members.map(m => m.id === memberId ? { ...m, role: newRole as 'admin' | 'editor' | 'viewer' } : m));
@@ -105,21 +164,61 @@ function StorageSettings({ storage, isOpen, onClose, onUpdate }: StorageSettings
 
         {/* General Tab */}
         {activeTab === 'general' && (
-          <div className="space-y-4">
-            <Input
-              label="Storage Name"
-              defaultValue={storage?.name}
-              placeholder="Enter storage name"
-            />
-            <Input
-              label="Telegram Channel ID"
-              defaultValue={storage?.telegram_channel_id}
-              placeholder="-1001234567890"
-              disabled
-              helperText="Channel ID cannot be changed after creation"
-            />
-            <div className="flex gap-3 pt-4">
-              <Button variant="destructive">Delete Storage</Button>
+          <div className="space-y-6">
+            <form onSubmit={handleRename} className="space-y-4">
+              <Input
+                label="Storage Name"
+                value={storageName}
+                onChange={(e) => setStorageName(e.target.value)}
+                placeholder="Enter storage name"
+              />
+              <div className="flex gap-3">
+                <Button type="submit" disabled={saving || !storageName.trim()}>
+                  {saving ? 'Saving...' : 'Save Changes'}
+                </Button>
+              </div>
+            </form>
+
+            <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
+              <Input
+                label="Telegram Channel ID"
+                value={storage?.telegram_channel_id}
+                placeholder="-1001234567890"
+                disabled
+                helperText="Channel ID cannot be changed after creation"
+              />
+            </div>
+
+            <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
+              {!showDeleteConfirm ? (
+                <Button
+                  variant="destructive"
+                  onClick={() => setShowDeleteConfirm(true)}
+                >
+                  Delete Storage
+                </Button>
+              ) : (
+                <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
+                  <p className="text-sm text-red-600 dark:text-red-400 mb-3">
+                    Are you sure you want to delete this storage? This action cannot be undone and all files will be permanently deleted.
+                  </p>
+                  <div className="flex gap-3">
+                    <Button
+                      variant="destructive"
+                      onClick={handleDelete}
+                      disabled={deleting}
+                    >
+                      {deleting ? 'Deleting...' : 'Yes, Delete Storage'}
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      onClick={() => setShowDeleteConfirm(false)}
+                    >
+                      Cancel
+                    </Button>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         )}

@@ -19,17 +19,12 @@ function Dashboard({ onStorageCreated, storages: initialStorages = [], onRefresh
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [selectedStorage, setSelectedStorage] = useState<Storage | null>(null);
   const [showSettingsModal, setShowSettingsModal] = useState(false);
-  const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [showRenameModal, setShowRenameModal] = useState(false);
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [formData, setFormData] = useState({
     name: '',
     telegram_channel_id: '',
   });
-  const [renameValue, setRenameValue] = useState('');
   const [creating, setCreating] = useState(false);
-  const [deleting, setDeleting] = useState(false);
-  const [renaming, setRenaming] = useState(false);
   const router = useRouter();
   const clickTimerRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -77,66 +72,6 @@ function Dashboard({ onStorageCreated, storages: initialStorages = [], onRefresh
     if (e) e.stopPropagation();
     setSelectedStorage(storage);
     setShowSettingsModal(true);
-  };
-
-  const handleDeleteStorage = async (e: React.MouseEvent | null, storage: Storage) => {
-    if (e) e.stopPropagation();
-    setSelectedStorage(storage);
-    setShowDeleteModal(true);
-  };
-
-  const confirmDeleteStorage = async () => {
-    if (!selectedStorage) return;
-    
-    setDeleting(true);
-    try {
-      await storageAPI.delete(selectedStorage.id);
-      toast.success('Storage deleted successfully');
-      setShowDeleteModal(false);
-      setSelectedStorage(null);
-      await loadStorages();
-    } catch (error: any) {
-      toast.error(error.message || 'Failed to delete storage');
-    } finally {
-      setDeleting(false);
-    }
-  };
-
-  const handleRenameStorage = (e: React.MouseEvent | null, storage: Storage) => {
-    if (e) e.stopPropagation();
-    setSelectedStorage(storage);
-    setRenameValue(storage.name);
-    setShowRenameModal(true);
-  };
-
-  const confirmRenameStorage = async (e: React.FormEvent) => {
-    console.log('confirmRenameStorage called');
-    e.preventDefault();
-    console.log('Selected storage:', selectedStorage);
-    console.log('Rename value:', renameValue);
-    
-    if (!selectedStorage || !renameValue.trim()) {
-      console.log('Validation failed - selectedStorage or renameValue is missing');
-      return;
-    }
-
-    console.log('Starting rename...');
-    setRenaming(true);
-    try {
-      console.log('Calling API update...');
-      const response = await storageAPI.update(selectedStorage.id, { name: renameValue.trim() });
-      console.log('Rename response:', response);
-      toast.success(`Storage renamed to "${renameValue.trim()}"`);
-      setShowRenameModal(false);
-      setSelectedStorage(null);
-      setRenameValue('');
-      await loadStorages(true);
-    } catch (error: any) {
-      console.error('Rename error:', error);
-      toast.error(error.message || 'Failed to rename storage');
-    } finally {
-      setRenaming(false);
-    }
   };
 
   const formatFileSize = (bytes: number): string => {
@@ -235,32 +170,6 @@ function Dashboard({ onStorageCreated, storages: initialStorages = [], onRefresh
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                 </svg>
                 <span className="hidden sm:inline">Settings</span>
-              </button>
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleRenameStorage(null, selectedStorage);
-                }}
-                className="p-2 sm:px-3 sm:py-1.5 text-sm rounded-md hover:bg-primary-100 dark:hover:bg-primary-800 transition-colors flex items-center gap-2"
-                title="Rename"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                </svg>
-                <span className="hidden sm:inline">Rename</span>
-              </button>
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleDeleteStorage(null, selectedStorage);
-                }}
-                className="p-2 sm:px-3 sm:py-1.5 text-sm rounded-md hover:bg-red-100 dark:hover:bg-red-900/20 text-red-600 dark:text-red-400 transition-colors flex items-center gap-2"
-                title="Delete"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                </svg>
-                <span className="hidden sm:inline">Delete</span>
               </button>
             </div>
           </div>
@@ -424,104 +333,10 @@ function Dashboard({ onStorageCreated, storages: initialStorages = [], onRefresh
               setSelectedStorage(null);
             }}
             onUpdate={loadStorages}
+            onDelete={loadStorages}
           />
         </Modal>
       )}
-
-      {/* Delete Storage Modal */}
-      <Modal
-        isOpen={showDeleteModal}
-        onClose={() => {
-          setShowDeleteModal(false);
-          setSelectedStorage(null);
-        }}
-        title="Delete Storage"
-      >
-        <div className="space-y-4">
-          <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
-            <div className="flex gap-3">
-              <span className="text-2xl">⚠️</span>
-              <div className="flex-1">
-                <h4 className="font-semibold text-red-900 dark:text-red-100 mb-1">
-                  Warning: This action cannot be undone
-                </h4>
-                <p className="text-sm text-red-800 dark:text-red-200">
-                  Deleting <strong>"{selectedStorage?.name}"</strong> will permanently remove:
-                </p>
-                <ul className="text-sm text-red-800 dark:text-red-200 mt-2 ml-4 list-disc">
-                  <li>All files and folders in this storage</li>
-                  <li>All file data from Telegram</li>
-                  <li>All sharing permissions</li>
-                </ul>
-              </div>
-            </div>
-          </div>
-
-          <div className="flex justify-end gap-3">
-            <Button 
-              variant="outline" 
-              onClick={() => {
-                setShowDeleteModal(false);
-                setSelectedStorage(null);
-              }}
-              disabled={deleting}
-            >
-              Cancel
-            </Button>
-            <Button
-              variant="destructive"
-              onClick={confirmDeleteStorage}
-              isLoading={deleting}
-            >
-              Delete Storage
-            </Button>
-          </div>
-        </div>
-      </Modal>
-
-      {/* Rename Storage Modal */}
-      <Modal
-        isOpen={showRenameModal}
-        onClose={() => {
-          setShowRenameModal(false);
-          setSelectedStorage(null);
-          setRenameValue('');
-        }}
-        title="Rename Storage"
-      >
-        <form onSubmit={confirmRenameStorage} className="space-y-6">
-          <Input
-            label="New Storage Name"
-            placeholder="Enter new name"
-            value={renameValue}
-            onChange={(e) => setRenameValue(e.target.value)}
-            required
-            autoFocus
-          />
-
-          <div className="flex justify-end gap-3">
-            <Button 
-              variant="outline" 
-              onClick={() => {
-                setShowRenameModal(false);
-                setSelectedStorage(null);
-                setRenameValue('');
-              }}
-              type="button"
-              disabled={renaming}
-            >
-              Cancel
-            </Button>
-            <Button
-              variant="primary"
-              type="submit"
-              isLoading={renaming}
-            >
-              Rename
-            </Button>
-          </div>
-        </form>
-      </Modal>
     </div>
   );
 }
