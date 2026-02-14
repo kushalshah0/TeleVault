@@ -261,26 +261,16 @@ export default function SharePage() {
         </div>
       </header>
 
-      <div className="max-w-2xl mx-auto px-4 py-12">
+      <div className="max-w-xl mx-auto px-4 py-8">
         <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl overflow-hidden">
-          <div className="bg-gradient-to-r from-primary-600 to-primary-500 p-8 text-center">
-            <div className="w-20 h-20 bg-white/20 rounded-2xl flex items-center justify-center mx-auto mb-4 backdrop-blur">
-              <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3-3m0 0l3 3m-3-3v12" />
-              </svg>
-            </div>
-            <h1 className="text-2xl font-bold text-white">Shared File</h1>
-            <p className="text-primary-100 mt-1">TeleVault</p>
-          </div>
-
-          <div className="p-8">
+          <div className="p-6">
             {error && (
-              <div className="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl text-red-600 dark:text-red-400 text-sm">
+              <div className="mb-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-red-600 dark:text-red-400 text-sm">
                 {error}
               </div>
             )}
 
-            <div className="bg-gray-50 dark:bg-gray-700/50 rounded-2xl p-5 mb-6">
+            <div className="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-4 mb-4">
               <div className="flex items-start gap-4">
                 <div className="w-14 h-14 bg-white dark:bg-gray-800 rounded-xl flex items-center justify-center text-2xl shadow-sm flex-shrink-0">
                   {getFileIcon(fileInfo?.mime_type || '')}
@@ -320,8 +310,8 @@ export default function SharePage() {
               </div>
             </div>
 
-            {requiresPassword && (
-              <div className="mb-6">
+          {requiresPassword && (
+            <div className="mb-4">
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   🔐 Password Required
                 </label>
@@ -357,7 +347,7 @@ export default function SharePage() {
             <Button
               onClick={handleDownload}
               disabled={downloading || (requiresPassword && !password) || !!isExpired}
-              className="w-full py-4 text-lg"
+              className="w-full"
             >
               {downloading ? (
                 <>
@@ -368,15 +358,15 @@ export default function SharePage() {
                 'Link Expired'
               ) : (
                 <>
-                  <svg className="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
                   </svg>
-                  Download File
+                  Download
                 </>
               )}
             </Button>
 
-            <p className="text-center text-sm text-gray-400 dark:text-gray-500 mt-6">
+            <p className="text-center text-xs text-gray-400 dark:text-gray-500 mt-4">
               Shared securely via TeleVault
             </p>
           </div>
