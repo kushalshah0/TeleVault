@@ -111,6 +111,8 @@ function StorageView({ onFileOperation, searchQuery, searchTrigger, onClearSearc
       // Read folder from URL query params ONLY on initial load
       const folderIdFromUrl = searchParams.get('folder');
       const initialFolderId = folderIdFromUrl ? parseInt(folderIdFromUrl) : null;
+      // Set the ref BEFORE setCurrentFolder to prevent duplicate calls in the useEffect
+      lastLoadedFolderRef.current = initialFolderId;
       setCurrentFolder(initialFolderId);
 
       // Load storage data
