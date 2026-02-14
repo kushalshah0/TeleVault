@@ -153,9 +153,13 @@ function StorageView({ onFileOperation, searchQuery, searchTrigger, onClearSearc
     lastLoadedFolderRef.current = currentFolder;
     
     if (currentFolder === null) {
-      // Restore cached root data when navigating back to root
-      setFolders(rootDataRef.current.folders);
-      setFiles(rootDataRef.current.files);
+      // Show spinner briefly then restore cached root data
+      setNavigating(true);
+      setTimeout(() => {
+        setFolders(rootDataRef.current.folders);
+        setFiles(rootDataRef.current.files);
+        setNavigating(false);
+      }, 100);
     } else {
       // Load contents for subfolders
       loadContents(currentFolder);
@@ -1500,7 +1504,7 @@ function StorageView({ onFileOperation, searchQuery, searchTrigger, onClearSearc
               type="submit"
               isLoading={creatingFolder}
             >
-              📁 Create Folder
+              Create Folder
             </Button>
           </div>
         </form>

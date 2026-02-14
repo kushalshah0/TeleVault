@@ -120,20 +120,11 @@ function Header({ user, onLogout, onSearch, onMenuToggle, searchValue = '' }: He
                 opacity-0 invisible group-hover:opacity-100 group-hover:visible
                 transition-all duration-200">
                 <div className="p-1">
-                  <button className="w-full text-left px-3 py-2 text-sm text-popover-foreground
-                    hover:bg-accent rounded-md flex items-center gap-2 transition-colors">
-                    <span>👤</span> Profile
-                  </button>
-                  <button className="w-full text-left px-3 py-2 text-sm text-popover-foreground
-                    hover:bg-accent rounded-md flex items-center gap-2 transition-colors">
-                    <span>⚙️</span> Settings
-                  </button>
-                  <div className="my-1 h-px bg-border" />
                   <button 
                     onClick={onLogout}
                     className="w-full text-left px-3 py-2 text-sm text-destructive
                       hover:bg-destructive/10 rounded-md flex items-center gap-2 transition-colors">
-                    <span>🚪</span> Logout
+                    Logout
                   </button>
                 </div>
               </div>
