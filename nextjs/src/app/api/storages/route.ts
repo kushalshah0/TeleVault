@@ -32,10 +32,6 @@ export async function GET(request: NextRequest) {
             email: true,
           }
         },
-        storage_permissions: {
-          where: { user_id: user.userId },
-          select: { role: true }
-        },
         _count: {
           select: {
             files: true,
@@ -48,19 +44,9 @@ export async function GET(request: NextRequest) {
       }
     })
 
-    // Add userRole to each storage
-    const storagesWithRole = storages.map(storage => {
-      const isOwner = storage.owner_id === user.userId
-      const userPermission = storage.storage_permissions[0]
-      return {
-        ...storage,
-        userRole: isOwner ? 'OWNER' : (userPermission?.role || 'VIEWER')
-      }
-    })
-
     return NextResponse.json({
       success: true,
-      data: storagesWithRole
+      data: storages
     })
 
   } catch (error) {

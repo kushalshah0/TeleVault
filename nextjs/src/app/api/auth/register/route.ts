@@ -66,18 +66,11 @@ export async function POST(request: NextRequest) {
       }
     })
 
-    // Fetch the created user to get is_admin
-    const createdUser = await prisma.users.findUnique({
-      where: { id: user.id },
-      select: { is_admin: true }
-    })
-
     // Create tokens
     const tokenPayload = {
       userId: user.id,
       username: user.username,
       email: user.email,
-      isAdmin: createdUser?.is_admin || false,
     }
 
     const accessToken = await createAccessToken(tokenPayload)
@@ -115,7 +108,6 @@ export async function POST(request: NextRequest) {
           id: user.id,
           username: user.username,
           email: user.email,
-          isAdmin: createdUser?.is_admin || false,
         }
       }
     }, { status: 201 })

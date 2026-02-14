@@ -56,7 +56,6 @@ export interface AuthResponse {
     id: number
     username: string
     email: string
-    isAdmin: boolean
   }
 }
 
@@ -79,7 +78,7 @@ export interface JWTPayload {
   userId: number
   username: string
   email: string
-  isAdmin: boolean
+  isAdmin?: boolean
 }
 
 // Storage permissions

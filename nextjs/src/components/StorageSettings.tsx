@@ -30,10 +30,9 @@ interface StorageSettingsProps {
   onClose: () => void;
   onUpdate?: () => void;
   onDelete?: () => void;
-  userRole?: string;
 }
 
-function StorageSettings({ storage, isOpen, onClose, onUpdate, onDelete, userRole = 'VIEWER' }: StorageSettingsProps) {
+function StorageSettings({ storage, isOpen, onClose, onUpdate, onDelete }: StorageSettingsProps) {
   const [activeTab, setActiveTab] = useState<'general' | 'access'>('general');
   const [storageName, setStorageName] = useState(storage?.name || '');
   const [saving, setSaving] = useState(false);
@@ -42,10 +41,9 @@ function StorageSettings({ storage, isOpen, onClose, onUpdate, onDelete, userRol
   
   const [members, setMembers] = useState<Member[]>([]);
   const [loadingMembers, setLoadingMembers] = useState(false);
-  const [addEmail, setAddEmail] = useState('');
-  const [addRole, setAddRole] = useState<'viewer' | 'editor' | 'admin'>('viewer');
-  const [adding, setAdding] = useState(false);
-  const [addError, setAddError] = useState('');
+  const [inviteEmail, setInviteEmail] = useState('');
+  const [inviting, setInviting] = useState(false);
+  const [inviteError, setInviteError] = useState('');
   const [updatingRoleId, setUpdatingRoleId] = useState<number | null>(null);
   const [removingId, setRemovingId] = useState<number | null>(null);
 
@@ -143,11 +141,12 @@ function StorageSettings({ storage, isOpen, onClose, onUpdate, onDelete, userRol
     }
   };
 
-  const handleAddUser = async () => {
-    if (!addEmail.trim() || adding || !storage) return;
+  const handleInvite = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!inviteEmail.trim() || inviting || !storage) return;
 
-    setAdding(true);
-    setAddError('');
+    setInviting(true);
+    setInviteError('');
     
     try {
       const token = localStorage.getItem('accessToken')
@@ -157,23 +156,22 @@ function StorageSettings({ storage, isOpen, onClose, onUpdate, onDelete, userRol
           'Content-Type': 'application/json',
           ...(token ? { Authorization: `Bearer ${token}` } : {})
         },
-        body: JSON.stringify({ email: addEmail.trim(), role: addRole })
+        body: JSON.stringify({ email: inviteEmail.trim() })
       })
 
       const data = await response.json()
 
       if (!response.ok) {
-        throw new Error(data.error || 'Failed to add user')
+        throw new Error(data.error || 'Failed to invite member')
       }
 
       setMembers(prev => [data, ...prev])
-      setAddEmail('')
-      setAddRole('viewer')
+      setInviteEmail('')
     } catch (error: any) {
-      console.error('Add user error:', error)
-      setAddError(error.message || 'Failed to add user')
+      console.error('Invite error:', error)
+      setInviteError(error.message || 'Failed to invite member')
     } finally {
-      setAdding(false)
+      setInviting(false)
     }
   };
 
@@ -266,65 +264,58 @@ function StorageSettings({ storage, isOpen, onClose, onUpdate, onDelete, userRol
             >
               General
             </button>
-            {userRole === 'OWNER' && (
-              <button
-                onClick={() => setActiveTab('access')}
-                className={`px-4 py-2 font-medium border-b-2 transition-colors ${activeTab === 'access'
-                  ? 'border-primary-500 text-primary-600 dark:text-primary-400'
-                  : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
-                  }`}
-              >
-                Access Control
-              </button>
-            )}
+            <button
+              onClick={() => setActiveTab('access')}
+              className={`px-4 py-2 font-medium border-b-2 transition-colors ${activeTab === 'access'
+                ? 'border-primary-500 text-primary-600 dark:text-primary-400'
+                : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
+                }`}
+            >
+              Access Control
+            </button>
           </nav>
         </div>
 
         {activeTab === 'general' && (
           <div className="space-y-6">
-            {userRole === 'OWNER' && (
-              <>
-                <form onSubmit={handleRename} className="space-y-4">
-                  <Input
-                    label="Storage Name"
-                    value={storageName}
-                    onChange={(e) => setStorageName(e.target.value)}
-                    placeholder="Enter storage name"
-                  />
+            <form onSubmit={handleRename} className="space-y-4">
+              <Input
+                label="Storage Name"
+                value={storageName}
+                onChange={(e) => setStorageName(e.target.value)}
+                placeholder="Enter storage name"
+              />
+              <div className="flex gap-3">
+                <Button type="submit" disabled={saving || !storageName.trim()}>
+                  {saving ? 'Saving...' : 'Save Changes'}
+                </Button>
+              </div>
+            </form>
+
+            <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
+              <Input
+                label="Telegram Channel ID"
+                value={storage?.telegram_channel_id}
+                placeholder="-1001234567890"
+                disabled
+                helperText="Channel ID cannot be changed after creation"
+              />
+            </div>
+
+            <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
+              {!showDeleteConfirm ? (
+                <Button
+                  variant="destructive"
+                  onClick={() => setShowDeleteConfirm(true)}
+                >
+                  Delete Storage
+                </Button>
+              ) : (
+                <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
+                  <p className="text-sm text-red-600 dark:text-red-400 mb-3">
+                    Are you sure you want to delete this storage? This action cannot be undone and all files will be permanently deleted.
+                  </p>
                   <div className="flex gap-3">
-                    <Button type="submit" disabled={saving || !storageName.trim()}>
-                      {saving ? 'Saving...' : 'Save Changes'}
-                    </Button>
-                  </div>
-                </form>
-
-                <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
-                  <Input
-                    label="Telegram Channel ID"
-                    value={storage?.telegram_channel_id}
-                    placeholder="-1001234567890"
-                    disabled
-                    helperText="Channel ID cannot be changed after creation"
-                  />
-                </div>
-              </>
-            )}
-
-            {userRole === 'OWNER' && (
-              <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
-                {!showDeleteConfirm ? (
-                  <Button
-                    variant="destructive"
-                    onClick={() => setShowDeleteConfirm(true)}
-                  >
-                    Delete Storage
-                  </Button>
-                ) : (
-                  <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
-                    <p className="text-sm text-red-600 dark:text-red-400 mb-3">
-                      Are you sure you want to delete this storage? This action cannot be undone and all files will be permanently deleted.
-                    </p>
-                    <div className="flex gap-3">
                     <Button
                       variant="destructive"
                       onClick={handleDelete}
@@ -347,48 +338,34 @@ function StorageSettings({ storage, isOpen, onClose, onUpdate, onDelete, userRol
 
         {activeTab === 'access' && (
           <div className="space-y-6">
-            <Card className="p-4">
-              <div className="flex gap-3 items-start">
-                <Input
-                  placeholder="Enter email address"
-                  value={addEmail}
-                  onChange={(e) => {
-                    setAddEmail(e.target.value)
-                    setAddError('')
-                  }}
-                  className="flex-1"
-                />
-                <Dropdown
-                  trigger={
-                    <button className="px-3 py-2 h-10 rounded-lg border border-border bg-background text-foreground flex items-center gap-2 hover:bg-accent">
-                      {addRole.charAt(0).toUpperCase() + addRole.slice(1)}
-                      <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                      </svg>
-                    </button>
-                  }
-                >
-                  {roles.map(role => (
-                    <DropdownItem
-                      key={role.value}
-                      onClick={() => setAddRole(role.value as 'viewer' | 'editor' | 'admin')}
-                    >
-                      {role.label}
-                    </DropdownItem>
-                  ))}
-                </Dropdown>
-                <Button onClick={handleAddUser} disabled={adding || !addEmail.trim()} className="h-10">
-                  {adding ? '...' : 'Add'}
-                </Button>
+            <Card>
+              <div className="p-4">
+                <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-4">
+                  Invite Members
+                </h3>
+                <form onSubmit={handleInvite} className="space-y-3">
+                  <Input
+                    placeholder="Enter email address"
+                    value={inviteEmail}
+                    onChange={(e) => {
+                      setInviteEmail(e.target.value)
+                      setInviteError('')
+                    }}
+                    className="flex-1"
+                  />
+                  {inviteError && (
+                    <p className="text-sm text-red-500">{inviteError}</p>
+                  )}
+                  <Button type="submit" disabled={inviting || !inviteEmail.trim()}>
+                    {inviting ? 'Inviting...' : 'Invite'}
+                  </Button>
+                </form>
               </div>
-              {addError && (
-                <p className="text-sm text-red-500 mt-2">{addError}</p>
-              )}
             </Card>
 
             <div>
               <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-4">
-                Users ({members.length})
+                Members ({members.length})
               </h3>
               {loadingMembers ? (
                 <div className="text-center py-8 text-gray-500">Loading...</div>
@@ -421,7 +398,7 @@ function StorageSettings({ storage, isOpen, onClose, onUpdate, onDelete, userRol
                                 className={`px-3 py-1.5 rounded-lg text-sm font-medium flex items-center gap-1 ${getRoleBadgeVariant(member.role)} ${updatingRoleId === member.id ? 'opacity-50' : ''}`}
                                 disabled={updatingRoleId === member.id}
                               >
-                                {member.role.charAt(0).toUpperCase() + member.role.slice(1)}
+                                {member.role}
                                 <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                                 </svg>

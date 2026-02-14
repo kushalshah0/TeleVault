@@ -52,7 +52,6 @@ export async function POST(request: NextRequest) {
       userId: user.id,
       username: user.username,
       email: user.email,
-      isAdmin: user.is_admin,
     }
 
     const accessToken = await createAccessToken(tokenPayload)
@@ -90,7 +89,6 @@ export async function POST(request: NextRequest) {
           id: user.id,
           username: user.username,
           email: user.email,
-          isAdmin: user.is_admin,
         }
       }
     })

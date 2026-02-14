@@ -17,7 +17,6 @@ export async function GET(request: NextRequest) {
         username: true,
         email: true,
         is_active: true,
-        is_admin: true,
         created_at: true,
       }
     })

@@ -1,27 +1,13 @@
 'use client'
 
-import { useState, useEffect, createContext, useContext, useRef } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import MainLayout from '@/components/layout/MainLayout'
 import { authAPI, storageAPI } from '@/utils/api-client'
 import { ModernLoader } from '@/components/ModernLoader'
+import { DashboardDataContext } from '@/context/DashboardContext'
 
-// Create context for sharing data with child pages
-export const DashboardDataContext = createContext<{
-  storages: any[]
-  onRefresh: (skipCache?: boolean) => Promise<void>
-  searchQuery: string
-  searchTrigger: number
-  clearSearch: () => void
-} | null>(null)
-
-export const useDashboardData = () => {
-  const context = useContext(DashboardDataContext)
-  if (!context) {
-    throw new Error('useDashboardData must be used within DashboardLayout')
-  }
-  return context
-}
+export { useDashboardData } from '@/context/DashboardContext'
 
 export default function DashboardLayout({
   children,
@@ -237,11 +223,7 @@ export default function DashboardLayout({
   return (
     <DashboardDataContext.Provider value={{ storages, onRefresh: loadStorages, searchQuery, searchTrigger, clearSearch }}>
       <MainLayout
-        user={{
-          username: user?.username || '',
-          email: user?.email || '',
-          isAdmin: user?.is_admin || false
-        }}
+        user={user}
         onLogout={handleLogout}
         storages={storages}
         usage={usage}

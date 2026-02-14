@@ -8,7 +8,6 @@ export interface MainLayoutProps {
   user?: {
     username: string
     email: string
-    isAdmin?: boolean
   }
   onLogout: () => void
   storages?: Storage[]
@@ -62,7 +61,6 @@ function MainLayout({
         usage={usage}
         isOpen={mobileMenuOpen}
         onClose={closeMobileMenu}
-        isAdmin={user?.isAdmin}
       />
 
       {/* Main Content */}

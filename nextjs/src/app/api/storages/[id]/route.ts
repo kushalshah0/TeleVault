@@ -39,10 +39,6 @@ export async function GET(
             email: true,
           }
         },
-        storage_permissions: {
-          where: { user_id: user.userId },
-          select: { role: true }
-        },
         // ⚡ OPTIMIZATION: Only load root-level folders and files (limited for performance)
         // Client will fetch nested items on-demand
         folders: {
@@ -71,20 +67,12 @@ export async function GET(
       )
     }
 
-    // Determine user's role
-    const isOwner = storage.owner_id === user.userId
-    const userPermission = storage.storage_permissions[0]
-    const userRole = isOwner ? 'OWNER' : (userPermission?.role || 'VIEWER')
-
     // ⚡ OPTIMIZATION: Don't log view activity (too frequent, slows down response)
     // Only log important actions like create/delete
 
     return NextResponse.json({
       success: true,
-      data: {
-        ...serializeBigInt(storage),
-        userRole
-      }
+      data: serializeBigInt(storage)
     })
 
   } catch (error) {

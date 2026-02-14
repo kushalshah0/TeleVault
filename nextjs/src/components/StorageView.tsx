@@ -57,7 +57,6 @@ function StorageView({ onFileOperation, searchQuery, searchTrigger, onClearSearc
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [storage, setStorage] = useState<Storage | null>(null);
-  const [userRole, setUserRole] = useState<string>('VIEWER');
   const [folders, setFolders] = useState<any[]>([]);
   const [files, setFiles] = useState<any[]>([]);
   const [currentFolder, setCurrentFolder] = useState<number | null>(null);
@@ -215,7 +214,6 @@ function StorageView({ onFileOperation, searchQuery, searchTrigger, onClearSearc
       // ⚡ OPTIMIZATION: Fetch storage with folders and files in one call
       const response = await storageAPI.get(storageId);
       setStorage(response.data);
-      setUserRole(response.data.userRole || 'VIEWER');
 
       // Use the data from storage response (avoid duplicate fetch)
       if (response.data.folders && response.data.files) {
@@ -701,33 +699,24 @@ function StorageView({ onFileOperation, searchQuery, searchTrigger, onClearSearc
         { icon: '🔗', label: 'Share', onClick: () => { setSharingFile({ id: item.id, name: item.name }); setShowShareModal(true); } }
       );
 
-      // Add Edit option for text files (only for owner, admin, editor)
-      if (isTextFile(item) && ['OWNER', 'ADMIN', 'EDITOR'].includes(userRole)) {
+      // Add Edit option for text files
+      if (isTextFile(item)) {
         menuItems.push(
           { icon: '✏️', label: 'Edit', onClick: () => handleEditFile(item) }
         );
       }
 
-      // Add Delete option (only for owner, admin, editor)
-      if (['OWNER', 'ADMIN', 'EDITOR'].includes(userRole)) {
-        menuItems.push(
-          { divider: true },
-          { icon: '🗑️', label: 'Delete', onClick: () => confirmFileDelete(item.id, item.name), danger: true }
-        );
-      }
+      menuItems.push(
+        { divider: true },
+        { icon: '🗑️', label: 'Delete', onClick: () => confirmFileDelete(item.id, item.name), danger: true }
+      );
     } else if (type === 'folder') {
-      // Add Rename and Delete (only for owner, admin, editor)
-      if (['OWNER', 'ADMIN', 'EDITOR'].includes(userRole)) {
-        menuItems.push(
-          { icon: '✏️', label: 'Rename', onClick: () => showRenameDialog(item, 'folder') },
-          { divider: true },
-          { icon: '🗑️', label: 'Delete', onClick: () => confirmFolderDelete(item.id, item.name), danger: true }
-        );
-      } else {
-        menuItems.push(
-          { icon: '👁️', label: 'Open', onClick: () => handleFolderOpen(item) }
-        );
-      }
+      menuItems.push(
+        { icon: '✏️', label: 'Rename', onClick: () => showRenameDialog(item, 'folder') },
+        { icon: '👁️', label: 'Open', onClick: () => handleFolderOpen(item) },
+        { divider: true },
+        { icon: '🗑️', label: 'Delete', onClick: () => confirmFolderDelete(item.id, item.name), danger: true }
+      );
     }
 
     showContextMenu(e, { item, type, menuItems });
@@ -1148,8 +1137,8 @@ function StorageView({ onFileOperation, searchQuery, searchTrigger, onClearSearc
                   </button>
                 )}
 
-                {/* Edit Button - Only for single text file and owner/admin/editor */}
-                {selectionCount === 1 && selectedItems[0].type === 'file' && isTextFile(selectedItems[0]) && ['OWNER', 'ADMIN', 'EDITOR'].includes(userRole) && (
+                {/* Edit Button - Only for single text file */}
+                {selectionCount === 1 && selectedItems[0].type === 'file' && isTextFile(selectedItems[0]) && (
                   <button
                     onClick={() => handleEditFile(selectedItems[0])}
                     className="p-1.5 sm:p-2 hover:bg-primary-100 dark:hover:bg-primary-800 rounded-lg 
@@ -1195,8 +1184,8 @@ function StorageView({ onFileOperation, searchQuery, searchTrigger, onClearSearc
                   </button>
                 )}
 
-                {/* Rename Button - Only for single item and owner/admin/editor */}
-                {selectionCount === 1 && ['OWNER', 'ADMIN', 'EDITOR'].includes(userRole) && (
+                {/* Rename Button - Only for single item */}
+                {selectionCount === 1 && (
                   <button
                     onClick={() => showRenameDialog(selectedItems[0], selectedItems[0].type ?? 'file')}
                     className="p-2 hover:bg-primary-100 dark:hover:bg-primary-800 rounded-lg 
@@ -1224,54 +1213,53 @@ function StorageView({ onFileOperation, searchQuery, searchTrigger, onClearSearc
                   </button>
                 )}
 
-                {/* Delete Button - For all selections and owner/admin/editor */}
-                {['OWNER', 'ADMIN', 'EDITOR'].includes(userRole) && (
-                  <button
-                    onClick={async () => {
-                      // For bulk delete, delete each item with progress
-                      if (selectionCount > 1) {
-                        setDeleting(true);
-                        setDeleteProgress({ current: 0, total: selectionCount, itemName: '' });
+                {/* Delete Button - For all selections */}
+                <button
+                  onClick={async () => {
+                    // For bulk delete, delete each item with progress
+                    if (selectionCount > 1) {
+                      setDeleting(true);
+                      setDeleteProgress({ current: 0, total: selectionCount, itemName: '' });
 
-                        for (let i = 0; i < selectedItems.length; i++) {
-                          const item = selectedItems[i];
-                          setDeleteProgress({ current: i + 1, total: selectionCount, itemName: item.name });
+                      for (let i = 0; i < selectedItems.length; i++) {
+                        const item = selectedItems[i];
+                        setDeleteProgress({ current: i + 1, total: selectionCount, itemName: item.name });
 
-                          try {
-                            if (item.type === 'file') {
-                              await fileAPI.delete(storageId, item.id, currentFolder);
-                            } else {
-                              await folderAPI.delete(storageId, item.id);
-                            }
-                            // Small delay to show progress
-                            await new Promise(resolve => setTimeout(resolve, 100));
-                          } catch (error) {
-                            console.error(`Failed to delete ${item.name}:`, error);
+                        try {
+                          if (item.type === 'file') {
+                            await fileAPI.delete(storageId, item.id, currentFolder);
+                          } else {
+                            await folderAPI.delete(storageId, item.id);
                           }
-                        }
-
-                        // Clear delete progress and selection before loading
-                        setDeleting(false);
-                        setDeleteProgress({ current: 0, total: 0, itemName: '' });
-                        clearSelection();
-
-                        await refreshData();
-                        onFileOperation?.();
-                      } else {
-                        // Single item - show confirmation modal
-                        const firstItem = selectedItems[0];
-                        if (firstItem.type === 'file') {
-                          confirmFileDelete(firstItem.id, firstItem.name ?? '');
-                        } else {
-                          confirmFolderDelete(firstItem.id, firstItem.name ?? '');
+                          // Small delay to show progress
+                          await new Promise(resolve => setTimeout(resolve, 100));
+                        } catch (error) {
+                          console.error(`Failed to delete ${item.name}:`, error);
                         }
                       }
-                    }}
-                    disabled={deleting}
-                    className="p-1.5 sm:p-2 hover:bg-red-100 dark:hover:bg-red-900/20 rounded-lg 
-                      transition-colors text-red-600 dark:text-red-400 disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0"
-                    title="Delete"
-                  >
+
+                      // Clear delete progress and selection before loading
+                      setDeleting(false);
+                      setDeleteProgress({ current: 0, total: 0, itemName: '' });
+                      clearSelection();
+
+                      await refreshData();
+                      onFileOperation?.();
+                    } else {
+                      // Single item - show confirmation modal
+                      const firstItem = selectedItems[0];
+                      if (firstItem.type === 'file') {
+                        confirmFileDelete(firstItem.id, firstItem.name ?? '');
+                      } else {
+                        confirmFolderDelete(firstItem.id, firstItem.name ?? '');
+                      }
+                    }
+                  }}
+                  disabled={deleting}
+                  className="p-1.5 sm:p-2 hover:bg-red-100 dark:hover:bg-red-900/20 rounded-lg 
+                    transition-colors text-red-600 dark:text-red-400 disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0"
+                  title="Delete"
+                >
                   {deleting ? (
                     <svg className="w-4 h-4 sm:w-5 sm:h-5 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
@@ -1284,7 +1272,6 @@ function StorageView({ onFileOperation, searchQuery, searchTrigger, onClearSearc
                     </svg>
                   )}
                 </button>
-                )}
               </div>
             </div>
 

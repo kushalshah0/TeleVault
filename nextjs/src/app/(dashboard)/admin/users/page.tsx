@@ -77,7 +77,7 @@ export default function AdminUsersPage() {
 
       setShowModal(false)
       setEditingUser(null)
-      setFormData({ username: '', email: '', password: '', is_admin: false })
+      setFormData({ username: '', email: '', password: '', is_admin: false, is_active: true })
       fetchUsers()
     } catch (err) {
       setError('An error occurred')

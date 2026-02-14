@@ -35,13 +35,11 @@ export async function createAccessToken(payload: {
   userId: number
   username: string
   email: string
-  isAdmin?: boolean
 }): Promise<string> {
   const token = await new SignJWT({
     userId: payload.userId,
     username: payload.username,
     email: payload.email,
-    isAdmin: payload.isAdmin || false,
   })
     .setProtectedHeader({ alg: 'HS256' })
     .setIssuedAt()
@@ -58,13 +56,11 @@ export async function createRefreshToken(payload: {
   userId: number
   username: string
   email: string
-  isAdmin?: boolean
 }): Promise<string> {
   const token = await new SignJWT({
     userId: payload.userId,
     username: payload.username,
     email: payload.email,
-    isAdmin: payload.isAdmin || false,
   })
     .setProtectedHeader({ alg: 'HS256' })
     .setIssuedAt()
