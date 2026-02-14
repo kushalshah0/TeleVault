@@ -940,51 +940,57 @@ function StorageView({ onFileOperation, searchQuery, searchTrigger, onClearSearc
           <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
             <ViewModeToggle viewMode={viewMode} onChange={setViewMode} />
 
-            {/* New Folder Button */}
-            <button
-              onClick={() => setShowCreateFolderModal(true)}
-              className="flex items-center gap-2 px-3 py-2 bg-gray-100 dark:bg-gray-800 
-                hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg transition-colors
-                text-gray-700 dark:text-gray-300"
-              title="New Folder"
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                  d="M9 13h6m-3-3v6m-9 1V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
-              </svg>
-              <span className="hidden sm:inline text-sm font-medium">New Folder</span>
-            </button>
+            {/* New Folder Button - Only for owner, admin, editor */}
+            {['OWNER', 'ADMIN', 'EDITOR'].includes(userRole) && (
+              <button
+                onClick={() => setShowCreateFolderModal(true)}
+                className="flex items-center gap-2 px-3 py-2 bg-gray-100 dark:bg-gray-800 
+                  hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg transition-colors
+                  text-gray-700 dark:text-gray-300"
+                title="New Folder"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                    d="M9 13h6m-3-3v6m-9 1V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
+                </svg>
+                <span className="hidden sm:inline text-sm font-medium">New Folder</span>
+              </button>
+            )}
 
-            {/* New Text File Button */}
-            <button
-              onClick={() => setShowTextEditor(true)}
-              className="flex items-center gap-2 px-3 py-2 bg-gray-100 dark:bg-gray-800 
-                hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg transition-colors
-                text-gray-700 dark:text-gray-300"
-              title="New Text File"
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                  d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-              </svg>
-              <span className="hidden sm:inline text-sm font-medium">New Text File</span>
-            </button>
+            {/* New Text File Button - Only for owner, admin, editor */}
+            {['OWNER', 'ADMIN', 'EDITOR'].includes(userRole) && (
+              <button
+                onClick={() => setShowTextEditor(true)}
+                className="flex items-center gap-2 px-3 py-2 bg-gray-100 dark:bg-gray-800 
+                  hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg transition-colors
+                  text-gray-700 dark:text-gray-300"
+                title="New Text File"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                    d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                </svg>
+                <span className="hidden sm:inline text-sm font-medium">New Text File</span>
+              </button>
+            )}
 
-            {/* Upload Files Button */}
-            <button
-              onClick={() => fileInputRef.current?.click()}
-              disabled={uploading}
-              className="flex items-center gap-2 px-3 py-2 bg-primary hover:opacity-90 
-                rounded-lg transition-all text-primary-foreground 
-                disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
-              title="Upload Files"
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                  d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-              </svg>
-              <span className="hidden sm:inline text-sm font-medium">Upload Files</span>
-            </button>
+            {/* Upload Files Button - Only for owner, admin, editor */}
+            {['OWNER', 'ADMIN', 'EDITOR'].includes(userRole) && (
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                disabled={uploading}
+                className="flex items-center gap-2 px-3 py-2 bg-primary hover:opacity-90 
+                  rounded-lg transition-all text-primary-foreground 
+                  disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
+                title="Upload Files"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                    d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                </svg>
+                <span className="hidden sm:inline text-sm font-medium">Upload Files</span>
+              </button>
+            )}
             <input
               ref={fileInputRef}
               type="file"
@@ -1309,7 +1315,7 @@ function StorageView({ onFileOperation, searchQuery, searchTrigger, onClearSearc
         />
 
         {/* Drag and Drop Overlay */}
-        {isDragging && (
+        {isDragging && ['OWNER', 'ADMIN', 'EDITOR'].includes(userRole) && (
           <div className="fixed inset-0 bg-primary-500/20 backdrop-blur-sm z-40 
             flex items-center justify-center pointer-events-none">
             <div className="bg-white dark:bg-gray-800 rounded-xl shadow-soft-lg p-8 
@@ -1337,11 +1343,15 @@ function StorageView({ onFileOperation, searchQuery, searchTrigger, onClearSearc
         <EmptyState
           icon={<span className="text-6xl">📂</span>}
           title="This folder is empty"
-          description="Upload files or create folders to organize your content"
+          description={['OWNER', 'ADMIN', 'EDITOR'].includes(userRole) 
+            ? "Upload files or create folders to organize your content"
+            : "This folder is empty"}
           action={
-            <Button variant="primary" onClick={() => fileInputRef.current?.click()}>
-              Upload Files
-            </Button>
+            ['OWNER', 'ADMIN', 'EDITOR'].includes(userRole) && (
+              <Button variant="primary" onClick={() => fileInputRef.current?.click()}>
+                Upload Files
+              </Button>
+            )
           }
         />
       ) : viewMode === 'grid' ? (
