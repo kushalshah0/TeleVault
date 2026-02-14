@@ -73,6 +73,7 @@ function StorageView({ onFileOperation, searchQuery, searchTrigger, onClearSearc
   const [isSearching, setIsSearching] = useState(false);
   const [searchLoading, setSearchLoading] = useState(false);
   const lastLoadedFolderRef = useRef<number | null>(null);
+  const rootDataRef = useRef<{ folders: any[]; files: any[] }>({ folders: [], files: [] });
   const [searchResults, setSearchResults] = useState<SearchResults>({ folders: [], files: [] });
   const [uploadQueue, setUploadQueue] = useState<ProgressState>({ current: 0, total: 0 });
   const [uploadingFiles, setUploadingFiles] = useState<UploadingFile[]>([]);
@@ -111,49 +112,52 @@ function StorageView({ onFileOperation, searchQuery, searchTrigger, onClearSearc
       // Read folder from URL query params ONLY on initial load
       const folderIdFromUrl = searchParams.get('folder');
       const initialFolderId = folderIdFromUrl ? parseInt(folderIdFromUrl) : null;
+      // Set ref BEFORE state to prevent duplicate in useEffect
+      lastLoadedFolderRef.current = initialFolderId;
       setCurrentFolder(initialFolderId);
 
       // Load storage data
       await loadStorage();
 
-      // If we're in a subfolder, load its contents (otherwise loadStorage already has root files/folders)
+      // If we're in a subfolder, load folder path (but NOT contents - let useEffect handle that)
       if (initialFolderId) {
-        await loadContents(initialFolderId);
+        try {
+          const token = typeof window !== 'undefined' ? localStorage.getItem('accessToken') : null;
+          const response = await fetch(`/api/folders/${initialFolderId}`, {
+            headers: token ? { Authorization: `Bearer ${token}` } : {}
+          });
+          const data = await response.json();
+          if (data?.data?.name) {
+            setFolderPath([{ id: initialFolderId, label: data.data.name }]);
+          }
+        } catch (e) {
+          console.error('Failed to load folder path:', e);
+        }
       }
 
-      hasInitialLoad.current = true; // Mark as initialized
+      // Mark as initialized AFTER everything is done
+      // The useEffect with currentFolder dependency will handle loading contents
+      hasInitialLoad.current = true;
       setLoading(false);
     };
     init();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [storageId]); // Only depend on storageId, NOT searchParams
 
-  // Sync currentFolder with URL changes (for browser back/forward)
-  useEffect(() => {
-    if (!hasInitialLoad.current) return; // Skip until initialized
-
-    const folderIdFromUrl = searchParams.get('folder');
-    const urlFolderId = folderIdFromUrl ? parseInt(folderIdFromUrl) : null;
-
-    // Only update if different from current state
-    if (urlFolderId !== currentFolder) {
-      setCurrentFolder(urlFolderId);
-
-      // Update folder path to match
-      if (urlFolderId === null) {
-        setFolderPath([]);
-      }
-      // Note: For proper breadcrumb path reconstruction, we'd need folder data
-      // For now, just update current folder
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchParams]); // Listen to URL changes
-
   useEffect(() => {
     // Load contents when folder changes (after initial load)
-    // Skip if this is the initial load (already handled above) or if folder hasn't changed
-    if (hasInitialLoad.current && storage && currentFolder !== lastLoadedFolderRef.current) {
-      lastLoadedFolderRef.current = currentFolder;
+    // Skip if not yet initialized or if folder hasn't changed
+    if (!hasInitialLoad.current) return;
+    if (currentFolder === lastLoadedFolderRef.current) return;
+    
+    lastLoadedFolderRef.current = currentFolder;
+    
+    if (currentFolder === null) {
+      // Restore cached root data when navigating back to root
+      setFolders(rootDataRef.current.folders);
+      setFiles(rootDataRef.current.files);
+    } else {
+      // Load contents for subfolders
       loadContents(currentFolder);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -206,6 +210,11 @@ function StorageView({ onFileOperation, searchQuery, searchTrigger, onClearSearc
       if (response.data.folders && response.data.files) {
         setFolders(response.data.folders);
         setFiles(response.data.files);
+        // Cache root data for when we navigate back to root
+        rootDataRef.current = { 
+          folders: response.data.folders, 
+          files: response.data.files 
+        };
       }
 
       setLoading(false);
@@ -217,13 +226,12 @@ function StorageView({ onFileOperation, searchQuery, searchTrigger, onClearSearc
   };
 
   // Add a ref to track ongoing fetch requests
-  const loadingRef = useRef(false);
   const lastLoadTime = useRef(0);
 
   const loadContents = async (folderId = currentFolder) => {
     // Prevent duplicate calls within 500ms
     const now = Date.now();
-    if (loadingRef.current || (now - lastLoadTime.current < 500)) {
+    if (now - lastLoadTime.current < 500) {
       console.log('🔄 Skipping duplicate loadContents call');
       return;
     }
@@ -236,7 +244,6 @@ function StorageView({ onFileOperation, searchQuery, searchTrigger, onClearSearc
     lastLoadTime.current = now;
     
     try {
-      loadingRef.current = true;
       setNavigating(true);
       // ⚡ OPTIMIZATION: Parallel fetch of folders and files
       const [foldersRes, filesRes] = await Promise.all([
@@ -252,7 +259,6 @@ function StorageView({ onFileOperation, searchQuery, searchTrigger, onClearSearc
     } finally {
       setLoading(false);
       setNavigating(false);
-      loadingRef.current = false;
     }
   };
 
@@ -879,12 +885,16 @@ function StorageView({ onFileOperation, searchQuery, searchTrigger, onClearSearc
             {currentFolder !== null && (
               <button
                 onClick={() => {
-                  // Navigate back using folder path
-                  if (folderPath.length > 1) {
-                    const previousFolder = folderPath[folderPath.length - 2];
-                    setCurrentFolder(previousFolder.id);
+                  // Navigate to parent folder (or root if no parent)
+                  const parentFolder = folderPath.length > 1 
+                    ? folderPath[folderPath.length - 2] 
+                    : null;
+                  
+                  if (parentFolder) {
+                    // Go to parent folder in path
+                    setCurrentFolder(parentFolder.id);
                     setFolderPath(folderPath.slice(0, -1));
-                    router.push(`/storage/${storageId}?folder=${previousFolder.id}`);
+                    router.push(`/storage/${storageId}?folder=${parentFolder.id}`);
                   } else {
                     // Go to root
                     setCurrentFolder(null);
