@@ -229,12 +229,18 @@ export default function SharePage() {
             </button>
           </div>
         </header>
-        <div className="flex items-center justify-center min-h-[calc(100vh-64px)]">
-          <div className="text-center">
-            <div className="w-12 h-12 border-4 border-primary-200 border-t-primary-600 rounded-full animate-spin mx-auto mb-4"></div>
+        <div className="min-h-[calc(100vh-64px)] flex items-center justify-center px-4">
+        <div className="w-full max-w-sm">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-8 text-center">
+            <div className="relative w-16 h-16 mx-auto mb-4">
+              <div className="absolute inset-0 rounded-full border-4 border-gray-200 dark:border-gray-700"></div>
+              <div className="absolute inset-0 rounded-full border-4 border-transparent border-t-primary-500 animate-spin"></div>
+              <div className="absolute inset-0 rounded-full border-4 border-transparent border-r-primary-400 animate-spin" style={{ animationDuration: '1.5s' }}></div>
+            </div>
             <p className="text-gray-600 dark:text-gray-400">Loading file info...</p>
           </div>
         </div>
+      </div>
       </div>
     )
   }
@@ -261,18 +267,20 @@ export default function SharePage() {
             </button>
           </div>
         </header>
-        <div className="flex items-center justify-center min-h-[calc(100vh-64px)] p-4">
-          <div className="max-w-md w-full bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8 text-center">
-            <div className="w-20 h-20 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center mx-auto mb-6">
-              <svg className="w-10 h-10 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div className="min-h-[calc(100vh-64px)] flex items-center justify-center px-4 py-8">
+        <div className="w-full max-w-sm">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-8 text-center">
+            <div className="w-16 h-16 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
+              <svg className="w-8 h-8 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
               </svg>
             </div>
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Unable to Access</h1>
+            <h1 className="text-xl font-bold text-gray-900 dark:text-white mb-2">Unable to Access</h1>
             <p className="text-gray-600 dark:text-gray-400 mb-6">{error}</p>
             <Button onClick={fetchFileInfo} className="w-full">Try Again</Button>
           </div>
         </div>
+      </div>
       </div>
     )
   }
