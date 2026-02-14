@@ -13,6 +13,7 @@ export type Storage = storages & {
     files: number
     folders: number
   }
+  userRole?: string
 }
 export type File = files
 export type Folder = folders
