@@ -149,19 +149,57 @@ export default function SharePage() {
   }
 
   const getFileIcon = (mimeType: string) => {
-    if (!mimeType) return (
-      <svg className="w-12 h-12 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-      </svg>
-    )
-    if (mimeType.startsWith('image/')) return '🖼️'
-    if (mimeType.startsWith('video/')) return '🎬'
-    if (mimeType.startsWith('audio/')) return '🎵'
-    if (mimeType.includes('pdf')) return '📕'
-    if (mimeType.includes('zip') || mimeType.includes('rar') || mimeType.includes('tar')) return '📦'
-    if (mimeType.includes('text')) return '📝'
+    if (!mimeType) {
+      return (
+        <svg className="w-8 h-8 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+        </svg>
+      )
+    }
+    if (mimeType.startsWith('image/')) {
+      return (
+        <svg className="w-8 h-8 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+        </svg>
+      )
+    }
+    if (mimeType.startsWith('video/')) {
+      return (
+        <svg className="w-8 h-8 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+        </svg>
+      )
+    }
+    if (mimeType.startsWith('audio/')) {
+      return (
+        <svg className="w-8 h-8 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
+        </svg>
+      )
+    }
+    if (mimeType.includes('pdf')) {
+      return (
+        <svg className="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+        </svg>
+      )
+    }
+    if (mimeType.includes('zip') || mimeType.includes('rar') || mimeType.includes('tar') || mimeType.includes('archive')) {
+      return (
+        <svg className="w-8 h-8 text-yellow-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
+        </svg>
+      )
+    }
+    if (mimeType.includes('text') || mimeType.includes('json') || mimeType.includes('xml') || mimeType.includes('html') || mimeType.includes('css') || mimeType.includes('js')) {
+      return (
+        <svg className="w-8 h-8 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+        </svg>
+      )
+    }
     return (
-      <svg className="w-12 h-12 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <svg className="w-8 h-8 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
       </svg>
     )
@@ -261,52 +299,63 @@ export default function SharePage() {
         </div>
       </header>
 
-      <div className="max-w-xl mx-auto px-4 py-8">
-        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl overflow-hidden">
-          <div className="p-6">
+      <div className="min-h-[calc(100vh-64px)] flex items-center justify-center px-4 py-8">
+        <div className="w-full max-w-sm">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6">
             {error && (
               <div className="mb-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-red-600 dark:text-red-400 text-sm">
                 {error}
               </div>
             )}
 
-            <div className="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-4 mb-4">
-              <div className="flex items-start gap-4">
-                <div className="w-14 h-14 bg-white dark:bg-gray-800 rounded-xl flex items-center justify-center text-2xl shadow-sm flex-shrink-0">
-                  {getFileIcon(fileInfo?.mime_type || '')}
-                </div>
-                <div className="min-w-0 flex-1">
-                  <h2 className="font-semibold text-base text-gray-900 dark:text-white truncate mb-2">
-                    {fileInfo?.name || 'Unknown file'}
-                  </h2>
-                  <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-gray-500 dark:text-gray-400">
-                    <span className="flex items-center gap-1">
-                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                      </svg>
-                      {fileInfo?.created_by || 'Unknown'}
-                    </span>
-                    <span className="flex items-center gap-1">
-                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                      </svg>
-                      {formatDate(fileInfo?.created_at)}
-                    </span>
-                    <span className={`flex items-center gap-1 ${isExpired ? 'text-red-500' : ''}`}>
-                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                      </svg>
-                      {formatDate(fileInfo?.expires_at || undefined)}
-                      {isExpired && ' (Expired)'}
-                    </span>
-                    <span className="flex items-center gap-1">
-                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4" />
-                      </svg>
-                      {formatFileSize(fileInfo?.size || 0)}
-                    </span>
-                  </div>
-                </div>
+            <div className="text-center mb-6">
+              <div className="w-16 h-16 bg-primary-100 dark:bg-primary-900/30 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                {getFileIcon(fileInfo?.mime_type || '')}
+              </div>
+              <h2 className="font-semibold text-lg text-gray-900 dark:text-white">
+                {fileInfo?.name || 'Unknown file'}
+              </h2>
+            </div>
+
+            <div className="space-y-2 mb-6 text-sm">
+              <div className="flex items-center justify-between py-2 px-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
+                <span className="text-gray-500 dark:text-gray-400 flex items-center gap-2">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                  </svg>
+                  Shared by
+                </span>
+                <span className="font-medium text-gray-900 dark:text-white">{fileInfo?.created_by || 'Unknown'}</span>
+              </div>
+              <div className="flex items-center justify-between py-2 px-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
+                <span className="text-gray-500 dark:text-gray-400 flex items-center gap-2">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  Created
+                </span>
+                <span className="font-medium text-gray-900 dark:text-white">{formatDate(fileInfo?.created_at)}</span>
+              </div>
+              <div className="flex items-center justify-between py-2 px-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
+                <span className="text-gray-500 dark:text-gray-400 flex items-center gap-2">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  </svg>
+                  Expires
+                </span>
+                <span className={`font-medium ${isExpired ? 'text-red-500' : 'text-gray-900 dark:text-white'}`}>
+                  {formatDate(fileInfo?.expires_at || undefined)}
+                  {isExpired && ' (Expired)'}
+                </span>
+              </div>
+              <div className="flex items-center justify-between py-2 px-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
+                <span className="text-gray-500 dark:text-gray-400 flex items-center gap-2">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4" />
+                  </svg>
+                  Size
+                </span>
+                <span className="font-medium text-gray-900 dark:text-white">{formatFileSize(fileInfo?.size || 0)}</span>
               </div>
             </div>
 
