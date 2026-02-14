@@ -16,7 +16,7 @@ export interface MainLayoutProps {
   children: ReactNode
   searchQuery?: string
   onSearchQueryChange?: (query: string, shouldSearch: boolean) => void
-  onRefreshStorages?: () => Promise<void>
+  onRefreshStorages?: (skipCache?: boolean) => Promise<void>
 }
 
 function MainLayout({ 

@@ -9,7 +9,7 @@ import { ModernLoader } from '@/components/ModernLoader'
 // Create context for sharing data with child pages
 export const DashboardDataContext = createContext<{
   storages: any[]
-  onRefresh: () => Promise<void>
+  onRefresh: (skipCache?: boolean) => Promise<void>
   searchQuery: string
   searchTrigger: number
   clearSearch: () => void

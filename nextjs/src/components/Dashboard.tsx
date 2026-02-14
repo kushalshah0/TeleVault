@@ -11,7 +11,7 @@ import { Storage } from '@/types';
 interface DashboardProps {
   onStorageCreated?: () => void;
   storages?: Storage[];
-  onRefresh?: () => Promise<void>;
+  onRefresh?: (skipCache?: boolean) => Promise<void>;
 }
 
 function Dashboard({ onStorageCreated, storages: initialStorages = [], onRefresh }: DashboardProps) {
