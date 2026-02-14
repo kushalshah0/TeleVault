@@ -271,8 +271,14 @@ export const folderAPI = {
   },
   
   rename: async (storageId: number, folderId: number, newName: string) => {
-    // TODO: Implement folder rename endpoint
-    return { data: {} }
+    const result = await apiRequest(`/api/folders/${folderId}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ name: newName }),
+    })
+    invalidateCache.storage(storageId)
+    apiCache.invalidatePattern(`folder-contents:`)
+    apiCache.invalidatePattern(`folders:${storageId}:`)
+    return result
   },
   
   delete: async (storageId: number, folderId: number) => {

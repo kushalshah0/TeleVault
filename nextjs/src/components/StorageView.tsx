@@ -216,14 +216,23 @@ function StorageView({ onFileOperation, searchQuery, searchTrigger, onClearSearc
 
   // Add a ref to track ongoing fetch requests
   const loadingRef = useRef(false);
+  const lastLoadTime = useRef(0);
 
   const loadContents = async (folderId = currentFolder) => {
-    // Prevent duplicate calls
-    if (loadingRef.current) {
+    // Prevent duplicate calls within 500ms
+    const now = Date.now();
+    if (loadingRef.current || (now - lastLoadTime.current < 500)) {
       console.log('🔄 Skipping duplicate loadContents call');
       return;
     }
 
+    // Skip if at root level - loadStorage already has this data
+    if (folderId === null || folderId === undefined) {
+      return;
+    }
+
+    lastLoadTime.current = now;
+    
     try {
       loadingRef.current = true;
       setNavigating(true);
@@ -242,6 +251,15 @@ function StorageView({ onFileOperation, searchQuery, searchTrigger, onClearSearc
       setLoading(false);
       setNavigating(false);
       loadingRef.current = false;
+    }
+  };
+
+  // Helper to refresh data based on current folder
+  const refreshData = async () => {
+    if (currentFolder === null) {
+      await loadStorage();
+    } else {
+      await loadContents(currentFolder);
     }
   };
 
@@ -295,7 +313,7 @@ function StorageView({ onFileOperation, searchQuery, searchTrigger, onClearSearc
       }
 
       // Refresh content once after all uploads complete
-      await loadContents();
+      await refreshData();
       onFileOperation?.(); // Refresh usage
     } catch (error) {
       console.error('Upload error:', error);
@@ -366,7 +384,7 @@ function StorageView({ onFileOperation, searchQuery, searchTrigger, onClearSearc
       }
 
       // Refresh content once after all uploads complete
-      await loadContents();
+      await refreshData();
       onFileOperation?.(); // Refresh usage
     } catch (error) {
       console.error('Upload error:', error);
@@ -477,7 +495,7 @@ function StorageView({ onFileOperation, searchQuery, searchTrigger, onClearSearc
       setDeleteProgress({ current: 0, total: 0, itemName: '' });
       clearSelection();
 
-      await loadContents();
+      await refreshData();
       onFileOperation?.(); // Refresh usage
     } catch (error) {
       alert('Failed to delete file');
@@ -497,7 +515,7 @@ function StorageView({ onFileOperation, searchQuery, searchTrigger, onClearSearc
     try {
       await folderAPI.create(storageId, newFolderName, currentFolder);
       setNewFolderName('');
-      await loadContents();
+      await refreshData();
     } catch (error) {
       console.error('Create folder error:', error);
       const err = error as any;
@@ -515,8 +533,6 @@ function StorageView({ onFileOperation, searchQuery, searchTrigger, onClearSearc
     e.preventDefault();
     if (!newName.trim() || !renameItem) return;
 
-    // Close modal immediately
-    setShowRenameModal(false);
     setRenaming(true);
 
     try {
@@ -536,13 +552,16 @@ function StorageView({ onFileOperation, searchQuery, searchTrigger, onClearSearc
       } else {
         await folderAPI.rename(storageId, renameItem.id, finalName);
       }
+      
+      toast.success(`${renameItem.type === 'file' ? 'File' : 'Folder'} renamed successfully`);
+      setShowRenameModal(false);
       setNewName('');
       setRenameItem(null);
       clearSelection();
-      await loadContents();
+      await refreshData();
     } catch (error) {
       const err = error as any;
-      alert(err.message || err.response?.data?.detail || 'Failed to rename');
+      toast.error(err.message || err.response?.data?.detail || 'Failed to rename');
     } finally {
       setRenaming(false);
     }
@@ -675,7 +694,8 @@ function StorageView({ onFileOperation, searchQuery, searchTrigger, onClearSearc
       );
     } else if (type === 'folder') {
       menuItems.push(
-        { icon: '📂', label: 'Open', onClick: () => handleFolderOpen(item) },
+        { icon: '✏️', label: 'Rename', onClick: () => showRenameDialog(item, 'folder') },
+        { icon: '👁️', label: 'Open', onClick: () => handleFolderOpen(item) },
         { divider: true },
         { icon: '🗑️', label: 'Delete', onClick: () => confirmFolderDelete(item.id, item.name), danger: true }
       );
@@ -706,7 +726,7 @@ function StorageView({ onFileOperation, searchQuery, searchTrigger, onClearSearc
       setDeleteProgress({ current: 0, total: 0, itemName: '' });
       clearSelection();
 
-      await loadContents();
+      await refreshData();
       onFileOperation?.();
     } catch (error) {
       alert('Failed to delete folder');
@@ -1100,6 +1120,23 @@ function StorageView({ onFileOperation, searchQuery, searchTrigger, onClearSearc
                   </button>
                 )}
 
+                {/* Open Button - Only for single folder */}
+                {selectionCount === 1 && selectedItems[0].type === 'folder' && (
+                  <button
+                    onClick={() => handleFolderOpen(selectedItems[0])}
+                    className="p-2 hover:bg-primary-100 dark:hover:bg-primary-800 rounded-lg 
+                      transition-colors text-gray-700 dark:text-gray-300"
+                    title="Open folder"
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                        d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                        d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                    </svg>
+                  </button>
+                )}
+
                 {/* Rename Button - Only for single item */}
                 {selectionCount === 1 && (
                   <button
@@ -1126,21 +1163,6 @@ function StorageView({ onFileOperation, searchQuery, searchTrigger, onClearSearc
                     <span className="text-xl">
                       {isItemStarred(selectedItems[0]) ? '⭐' : '☆'}
                     </span>
-                  </button>
-                )}
-
-                {/* Open Button - Only for single folder */}
-                {selectionCount === 1 && selectedItems[0].type === 'folder' && (
-                  <button
-                    onClick={() => handleFolderOpen(selectedItems[0])}
-                    className="p-2 hover:bg-primary-100 dark:hover:bg-primary-800 rounded-lg 
-                      transition-colors text-gray-700 dark:text-gray-300"
-                    title="Open folder"
-                  >
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                        d="M5 19a2 2 0 01-2-2V7a2 2 0 012-2h4l2 2h4a2 2 0 012 2v1M5 19h14a2 2 0 002-2v-5a2 2 0 00-2-2H9a2 2 0 00-2 2v5a2 2 0 01-2 2z" />
-                    </svg>
                   </button>
                 )}
 
@@ -1174,7 +1196,7 @@ function StorageView({ onFileOperation, searchQuery, searchTrigger, onClearSearc
                       setDeleteProgress({ current: 0, total: 0, itemName: '' });
                       clearSelection();
 
-                      await loadContents();
+                      await refreshData();
                       onFileOperation?.();
                     } else {
                       // Single item - show confirmation modal
@@ -1529,7 +1551,7 @@ function StorageView({ onFileOperation, searchQuery, searchTrigger, onClearSearc
               isLoading={renaming}
               disabled={!hasNameChanged()}
             >
-              ✏️ Rename
+              {renaming ? 'Renaming...' : 'Rename'}
             </Button>
           </div>
         </form>
@@ -1583,7 +1605,7 @@ function StorageView({ onFileOperation, searchQuery, searchTrigger, onClearSearc
               storageId: storageId,
               folderId: currentFolder === null ? undefined : currentFolder
             });
-            await loadContents();
+            await refreshData();
             onFileOperation?.();
 
             // Clear editing state after successful save

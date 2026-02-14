@@ -26,21 +26,26 @@ export default function RootLayout({
             toastOptions={{
               duration: 3000,
               style: {
-                background: '#363636',
-                color: '#fff',
+                background: 'hsl(var(--card))',
+                color: 'hsl(var(--card-foreground))',
+                border: '1px solid hsl(var(--border))',
               },
               success: {
                 style: {
-                  background: '#10b981',
+                  background: 'hsl(var(--success) / 0.9)',
+                  color: 'hsl(var(--success-foreground))',
+                  border: '1px solid hsl(var(--success))',
                 },
                 iconTheme: {
-                  primary: '#fff',
-                  secondary: '#10b981',
+                  primary: 'hsl(var(--success-foreground))',
+                  secondary: 'hsl(var(--success))',
                 },
               },
               error: {
                 style: {
-                  background: '#ef4444',
+                  background: 'hsl(var(--destructive) / 0.9)',
+                  color: 'hsl(var(--destructive-foreground))',
+                  border: '1px solid hsl(var(--destructive))',
                 },
               },
             }}

@@ -113,6 +113,15 @@ export async function PATCH(
       }
     })
 
+    // Convert BigInt to Number for JSON serialization
+    const serializedFile = {
+      ...updatedFile,
+      id: Number(updatedFile.id),
+      storage_id: Number(updatedFile.storage_id),
+      folder_id: updatedFile.folder_id ? Number(updatedFile.folder_id) : null,
+      size: Number(updatedFile.size),
+    }
+
     // Log activity (async, don't wait)
     prisma.activities.create({
       data: {
@@ -129,7 +138,7 @@ export async function PATCH(
 
     return NextResponse.json({
       success: true,
-      data: updatedFile
+      data: serializedFile
     })
 
   } catch (error) {

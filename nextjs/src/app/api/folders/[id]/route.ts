@@ -65,6 +65,78 @@ export async function GET(
 }
 
 /**
+ * PATCH /api/folders/:id - Rename folder
+ */
+export async function PATCH(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const user = await requireAuth(request)
+    const { id } = await params
+    const folderId = parseInt(id)
+    const body = await request.json()
+
+    if (!body.name) {
+      return NextResponse.json(
+        { error: 'Name is required' },
+        { status: 400 }
+      )
+    }
+
+    // Check permissions
+    const folder = await prisma.folders.findFirst({
+      where: {
+        id: folderId,
+        storages: {
+          OR: [
+            { owner_id: user.userId },
+            {
+              storage_permissions: {
+                some: {
+                  user_id: user.userId,
+                  role: { in: ['EDITOR', 'ADMIN'] }
+                }
+              }
+            }
+          ]
+        }
+      }
+    })
+
+    if (!folder) {
+      return NextResponse.json(
+        { error: 'Folder not found or unauthorized' },
+        { status: 404 }
+      )
+    }
+
+    // Update folder name
+    const updatedFolder = await prisma.folders.update({
+      where: { id: folderId },
+      data: { name: body.name }
+    })
+
+    return NextResponse.json({
+      success: true,
+      data: {
+        ...updatedFolder,
+        id: Number(updatedFolder.id),
+        storage_id: Number(updatedFolder.storage_id),
+        parent_id: updatedFolder.parent_id ? Number(updatedFolder.parent_id) : null,
+      }
+    })
+
+  } catch (error) {
+    console.error('Rename folder error:', error)
+    return NextResponse.json(
+      { error: 'Failed to rename folder' },
+      { status: 500 }
+    )
+  }
+}
+
+/**
  * DELETE /api/folders/:id - Delete folder and contents
  */
 export async function DELETE(
