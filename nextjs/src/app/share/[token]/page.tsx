@@ -317,7 +317,7 @@ export default function SharePage() {
             )}
 
             <div className="text-center mb-6">
-              <div className="w-16 h-16 bg-primary-100 dark:bg-primary-900/30 rounded-2xl flex items-center justify-center mx-auto mb-4">
+              <div className="w-16 h-16 bg-primary-100 dark:bg-primary-900/30 rounded-2xl border-2 border-primary-200 dark:border-primary-800 flex items-center justify-center mx-auto mb-4">
                 {getFileIcon(fileInfo?.mime_type || '')}
               </div>
               <h2 className="font-semibold text-lg text-gray-900 dark:text-white">
