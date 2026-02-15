@@ -263,8 +263,8 @@ export default function AdminUsersPage() {
       </div>
 
       {showModal && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 m-0">
-          <div className="bg-card rounded-lg border border-border w-full max-w-md p-6 m-0">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
+          <div className="bg-card rounded-lg border border-border w-full max-w-md p-6">
             <h2 className="text-xl font-semibold text-foreground mb-4">
               {editingUser ? 'Edit User' : 'Add User'}
             </h2>
