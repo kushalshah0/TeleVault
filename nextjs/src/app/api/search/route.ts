@@ -150,23 +150,23 @@ export async function GET(request: NextRequest) {
     console.log(`Found ${files.length} files`)
     console.log('File names:', files.map(f => f.name))
 
-    // Transform results to match frontend expectations
+    // Transform results to match frontend expectations - convert BigInt to number
     const transformedFolders = folders.map(folder => ({
-      id: folder.id,
+      id: Number(folder.id),
       name: folder.name,
-      storage_id: folder.storage_id,
-      parent_id: folder.parent_id,
+      storage_id: Number(folder.storage_id),
+      parent_id: folder.parent_id ? Number(folder.parent_id) : null,
       created_at: folder.created_at,
       type: 'folder',
     }))
 
     const transformedFiles = files.map(file => ({
-      id: file.id,
+      id: Number(file.id),
       name: file.name,
       mimeType: file.mime_type,
-      size: file.size,
-      storage_id: file.storage_id,
-      folder_id: file.folder_id,
+      size: Number(file.size),
+      storage_id: Number(file.storage_id),
+      folder_id: file.folder_id ? Number(file.folder_id) : null,
       isStarred: false, // Not in schema, default to false
       created_at: file.created_at,
       type: 'file',
