@@ -221,7 +221,11 @@ export default function DashboardLayout({
   return (
     <DashboardDataContext.Provider value={{ storages, onRefresh: loadStorages, searchQuery, searchTrigger, clearSearch }}>
       <MainLayout
-        user={user}
+        user={{
+          username: user?.username || '',
+          email: user?.email || '',
+          isAdmin: user?.is_admin || false
+        }}
         onLogout={handleLogout}
         storages={storages}
         usage={usage}
