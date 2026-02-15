@@ -167,17 +167,47 @@ export async function DELETE(
       )
     }
 
-    const share = await prisma.file_shares.findFirst({
-      where: {
-        id: parseInt(shareId),
-        created_by: user.userId
-      }
+    const share = await prisma.file_shares.findUnique({
+      where: { id: parseInt(shareId) },
+      include: { files: { include: { storages: true } } }
     })
 
     if (!share) {
       return NextResponse.json(
-        { error: 'Share link not found or access denied' },
+        { error: 'Share link not found' },
         { status: 404 }
+      )
+    }
+
+    // Check if user has access to the file
+    const file = await prisma.files.findFirst({
+      where: {
+        id: share.file_id,
+        storages: {
+          OR: [
+            { owner_id: user.userId },
+            {
+              storage_permissions: {
+                some: { user_id: user.userId }
+              }
+            }
+          ]
+        }
+      }
+    })
+
+    if (!file) {
+      return NextResponse.json(
+        { error: 'File not found or access denied' },
+        { status: 404 }
+      )
+    }
+
+    // Admin can delete any share, regular users can only delete their own
+    if (!user.isAdmin && share.created_by !== user.userId) {
+      return NextResponse.json(
+        { error: 'You can only delete your own share links' },
+        { status: 403 }
       )
     }
 
