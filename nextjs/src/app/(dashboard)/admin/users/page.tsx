@@ -161,8 +161,14 @@ export default function AdminUsersPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <ModernLoader text="Loading users..." />
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-2xl font-bold text-foreground">User Management</h1>
+          <p className="text-muted-foreground">Manage system users and permissions</p>
+        </div>
+        <div className="flex flex-col items-center justify-center py-12 gap-4">
+          <ModernLoader text="Loading users..." />
+        </div>
       </div>
     )
   }
