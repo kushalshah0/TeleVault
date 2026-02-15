@@ -269,14 +269,14 @@ export default function AdminUsersPage() {
               {editingUser ? 'Edit User' : 'Add User'}
             </h2>
 
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <form onSubmit={handleSubmit} className="mt-4">
               {error && (
                 <div className="p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-red-600 dark:text-red-400 text-sm">
                   {error}
                 </div>
               )}
 
-              <div>
+              <div className="mb-4">
                 <label className="block text-sm font-medium text-foreground mb-1">
                   Username
                 </label>
@@ -289,7 +289,7 @@ export default function AdminUsersPage() {
                 />
               </div>
 
-              <div>
+              <div className="mb-4">
                 <label className="block text-sm font-medium text-foreground mb-1">
                   Email
                 </label>
@@ -302,7 +302,7 @@ export default function AdminUsersPage() {
                 />
               </div>
 
-              <div>
+              <div className="mb-4">
                 <label className="block text-sm font-medium text-foreground mb-1">
                   Password {editingUser && '(leave empty to keep current)'}
                 </label>
@@ -333,7 +333,7 @@ export default function AdminUsersPage() {
                 </div>
               </div>
 
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 mb-4">
                 <input
                   type="checkbox"
                   id="is_admin"
@@ -347,7 +347,7 @@ export default function AdminUsersPage() {
               </div>
 
               {editingUser && (
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 mb-4">
                   <input
                     type="checkbox"
                     id="is_active"
