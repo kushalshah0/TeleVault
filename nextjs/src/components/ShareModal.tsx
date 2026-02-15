@@ -91,15 +91,8 @@ export default function ShareModal({ isOpen, onClose, file, onShareCreated }: Sh
 
       const data = await response.json()
       
-      setShareLinks(prev => [{
-        id: Date.now(),
-        share_url: data.share_url,
-        expires_at: data.expires_at,
-        max_downloads: data.max_downloads,
-        download_count: 0,
-        created_at: data.created_at,
-        is_expired: false
-      }, ...prev])
+      // Refresh share links to get the actual IDs
+      await fetchShareLinks()
 
       setExpirationDays('')
       setMaxDownloads('')
