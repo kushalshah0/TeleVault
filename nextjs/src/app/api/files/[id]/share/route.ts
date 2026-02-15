@@ -129,7 +129,7 @@ export async function GET(
       orderBy: { created_at: 'desc' }
     })
 
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || request.nextUrl.origin
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
     
     return NextResponse.json(shares.map(share => ({
       id: share.id,
