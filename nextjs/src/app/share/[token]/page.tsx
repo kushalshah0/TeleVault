@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { useParams } from 'next/navigation'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
+import { Loader } from '@/components/ModernLoader'
 import ThemeToggle from '@/components/ThemeToggle'
 
 interface FileInfo {
@@ -247,17 +248,13 @@ export default function SharePage() {
           </div>
         </header>
         <div className="min-h-[calc(100vh-64px)] flex items-center justify-center px-4">
-        <div className="w-full max-w-sm">
-          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-8 text-center">
-            <div className="relative w-16 h-16 mx-auto mb-4">
-              <div className="absolute inset-0 rounded-full border-4 border-gray-200 dark:border-gray-700"></div>
-              <div className="absolute inset-0 rounded-full border-4 border-transparent border-t-primary-500 animate-spin"></div>
-              <div className="absolute inset-0 rounded-full border-4 border-transparent border-r-primary-400 animate-spin" style={{ animationDuration: '1.5s' }}></div>
+          <div className="w-full max-w-sm">
+            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-8 text-center">
+              <Loader size="lg" className="mx-auto mb-4" />
+              <p className="text-gray-600 dark:text-gray-400">Loading file info...</p>
             </div>
-            <p className="text-gray-600 dark:text-gray-400">Loading file info...</p>
           </div>
         </div>
-      </div>
       </div>
     )
   }

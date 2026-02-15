@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { storageAPI } from '@/utils/api-client';
 import { Card, EmptyState } from './ui';
-import { Spinner } from './ModernLoader';
+import { Loader } from './ModernLoader';
 
 interface Activity {
   id: number;
@@ -101,7 +101,7 @@ function ActivityView() {
           </p>
         </div>
         <div className="flex flex-col items-center justify-center py-12 gap-4">
-          <Spinner size="lg" />
+          <Loader size="lg" />
           <p className="text-sm text-gray-600 dark:text-gray-400">Loading activities...</p>
         </div>
       </div>

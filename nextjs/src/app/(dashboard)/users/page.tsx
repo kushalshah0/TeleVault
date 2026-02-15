@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { Modal } from '@/components/ui/Modal'
-import { Spinner } from '@/components/ModernLoader'
+import { Loader } from '@/components/ModernLoader'
 
 interface User {
   id: number
@@ -168,7 +168,7 @@ export default function AdminUsersPage() {
           <p className="text-muted-foreground">Manage system users and permissions</p>
         </div>
         <div className="flex flex-col items-center justify-center py-12 gap-4">
-          <Spinner size="lg" />
+          <Loader size="lg" />
           <p className="text-sm text-muted-foreground">Loading users...</p>
         </div>
       </div>

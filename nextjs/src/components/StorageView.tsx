@@ -4,7 +4,7 @@ import { useState, useEffect, useRef, useCallback, ChangeEvent, DragEvent, FormE
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import toast from 'react-hot-toast';
 import { storageAPI, folderAPI, fileAPI } from '@/utils/api-client';
-import { LoadingSkeleton, Spinner } from './ModernLoader';
+import { LoadingSkeleton, Spinner, Loader } from './ModernLoader';
 import FilePreview from './FilePreview';
 import { Button, Card, Modal, Input, EmptyState, Breadcrumbs, ContextMenu, FileIcon, Dropdown, ConfirmDialog, ViewModeToggle } from './ui';
 import { BreadcrumbItem } from './ui/Breadcrumbs';
@@ -862,10 +862,8 @@ function StorageView({ onFileOperation, searchQuery, searchTrigger, onClearSearc
 
   if (loading || !storage) {
     return (
-      <div className="flex flex-col items-center justify-center py-20">
-        <div className="text-primary-500 mb-4">
-          <Spinner size="lg" />
-        </div>
+      <div className="flex flex-col items-center justify-center py-20 gap-4">
+        <Loader size="lg" />
         <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
           Loading storage...
         </p>
@@ -1331,10 +1329,8 @@ function StorageView({ onFileOperation, searchQuery, searchTrigger, onClearSearc
 
       {/* Content Area */}
       {navigating ? (
-        <div className="flex flex-col items-center justify-center py-20">
-          <div className="text-primary-500 mb-4">
-            <Spinner size="lg" />
-          </div>
+        <div className="flex flex-col items-center justify-center py-20 gap-4">
+          <Loader size="lg" />
           <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
             Loading folder contents...
           </p>

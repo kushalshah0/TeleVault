@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { Button, Card, Input, Modal, Dropdown, DropdownItem } from './ui';
+import { Loader } from './ModernLoader';
 
 interface Member {
   id: number;
@@ -383,7 +384,9 @@ function StorageSettings({ storage, isOpen, onClose, onUpdate, onDelete }: Stora
                 Users ({members.length})
               </h3>
               {loadingMembers ? (
-                <div className="text-center py-8 text-gray-500">Loading...</div>
+                <div className="flex items-center justify-center py-8">
+                  <Loader size="lg" />
+                </div>
               ) : members.length === 0 ? (
                 <div className="text-center py-8 text-gray-500">No members yet</div>
               ) : (
