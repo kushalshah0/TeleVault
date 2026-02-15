@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { Modal } from '@/components/ui/Modal'
+import { Spinner } from '@/components/ModernLoader'
 
 interface User {
   id: number
@@ -157,6 +158,21 @@ export default function AdminUsersPage() {
     } catch (err) {
       console.error('Failed to toggle admin status:', err)
     }
+  }
+
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-2xl font-bold text-foreground">User Management</h1>
+          <p className="text-muted-foreground">Manage system users and permissions</p>
+        </div>
+        <div className="flex flex-col items-center justify-center py-12 gap-4">
+          <Spinner size="lg" />
+          <p className="text-sm text-muted-foreground">Loading users...</p>
+        </div>
+      </div>
+    )
   }
 
   return (
