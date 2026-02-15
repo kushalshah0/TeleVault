@@ -76,9 +76,7 @@ export function ModernLoader({ text = 'Loading...', type = 'spinner' }: { text?:
             ☁️
           </div>
         ) : (
-          <div className="text-primary-500">
-            <Spinner size="xl" />
-          </div>
+          <Loader size="xl" />
         )}
         <p className="text-lg font-medium text-gray-900 dark:text-gray-100 animate-pulse">
           {text}
