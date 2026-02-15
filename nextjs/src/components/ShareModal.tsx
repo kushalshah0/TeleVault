@@ -231,7 +231,6 @@ export default function ShareModal({ isOpen, onClose, file, onShareCreated }: Sh
                 <code className="text-xs bg-gray-200 dark:bg-gray-700 px-2 py-1 rounded font-mono">
                   {showPassword ? shareLink.password : '•'.repeat(shareLink.password.length)}
                 </code>
-                <span className="text-xs text-gray-400">({shareLink.password.length} chars)</span>
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
@@ -311,10 +310,10 @@ export default function ShareModal({ isOpen, onClose, file, onShareCreated }: Sh
           <div className="flex gap-2">
             <Button
               type="submit"
-              disabled={isLoading || (shareLink ? !hasChanges : false)}
-              className="flex-1"
+              disabled={isLoading}
+              className={`flex-1 ${shareLink && !hasChanges ? 'opacity-50 cursor-not-allowed' : ''}`}
             >
-              {isLoading ? 'Saving...' : shareLink ? (hasChanges ? 'Update Link' : 'No Changes') : 'Create Link'}
+              {isLoading ? 'Saving...' : shareLink ? 'Update' : 'Create Link'}
             </Button>
             {shareLink && (
               <Button
