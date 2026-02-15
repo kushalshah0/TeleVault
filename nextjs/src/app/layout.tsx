@@ -9,6 +9,9 @@ const inter = Inter({ subsets: ['latin'] })
 export const metadata: Metadata = {
   title: 'TeleVault - Telegram Cloud Storage',
   description: 'Secure file storage using Telegram channels',
+  icons: {
+    icon: '/favicon.svg',
+  },
 }
 
 export default function RootLayout({
