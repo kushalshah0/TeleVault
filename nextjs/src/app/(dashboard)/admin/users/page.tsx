@@ -159,6 +159,10 @@ export default function AdminUsersPage() {
     }
   }
 
+  if (loading) {
+    return <ModernLoader text="Loading users..." />
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -179,28 +183,19 @@ export default function AdminUsersPage() {
       </div>
 
       <div className="bg-card rounded-lg border border-border overflow-hidden">
-        {loading ? (
-          <div className="flex items-center justify-center py-12">
-            <ModernLoader text="Loading users..." />
-          </div>
-        ) : users.length === 0 ? (
-          <div className="p-8 text-center text-muted-foreground">
-            No users found
-          </div>
-        ) : (
-          <table className="w-full">
-            <thead className="bg-muted/50">
-              <tr>
-                <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">User</th>
-                <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">Email</th>
-                <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">Status</th>
-                <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">Role</th>
-                <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">Created</th>
-                <th className="px-4 py-3 text-right text-sm font-medium text-muted-foreground">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-border">
-              {users.map((user) => (
+        <table className="w-full">
+          <thead className="bg-muted/50">
+            <tr>
+              <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">User</th>
+              <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">Email</th>
+              <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">Status</th>
+              <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">Role</th>
+              <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">Created</th>
+              <th className="px-4 py-3 text-right text-sm font-medium text-muted-foreground">Actions</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-border">
+            {users.map((user) => (
               <tr key={user.id} className="hover:bg-muted/50">
                 <td className="px-4 py-3">
                   <div className="flex items-center gap-3">
@@ -264,6 +259,11 @@ export default function AdminUsersPage() {
             ))}
           </tbody>
         </table>
+
+        {users.length === 0 && (
+          <div className="p-8 text-center text-muted-foreground">
+            No users found
+          </div>
         )}
       </div>
 
