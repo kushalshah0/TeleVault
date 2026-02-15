@@ -55,8 +55,14 @@ function LoginForm() {
     try {
       const response = await authAPI.login(formData.username, formData.password) as any
 
-      localStorage.setItem('accessToken', response.data.accessToken)
-      localStorage.setItem('refreshToken', response.data.refreshToken)
+      // Store tokens based on rememberMe setting
+      if (rememberMe) {
+        localStorage.setItem('accessToken', response.data.accessToken)
+        localStorage.setItem('refreshToken', response.data.refreshToken)
+      } else {
+        sessionStorage.setItem('accessToken', response.data.accessToken)
+        sessionStorage.setItem('refreshToken', response.data.refreshToken)
+      }
       localStorage.setItem('user', JSON.stringify(response.data.user))
 
       sessionStorage.removeItem('redirectAfterLogin')
