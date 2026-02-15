@@ -160,7 +160,11 @@ export default function AdminUsersPage() {
   }
 
   if (loading) {
-    return <ModernLoader text="Loading users..." />
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <ModernLoader text="Loading users..." />
+      </div>
+    )
   }
 
   return (
