@@ -35,7 +35,14 @@ export async function POST(
       where: {
         id: fileId,
         storages: {
-          owner_id: user.userId
+          OR: [
+            { owner_id: user.userId },
+            {
+              storage_permissions: {
+                some: { user_id: user.userId }
+              }
+            }
+          ]
         }
       },
       include: { storages: true }
@@ -92,10 +99,32 @@ export async function GET(
     const { id } = await params
     const fileId = parseInt(id)
 
+    const file = await prisma.files.findFirst({
+      where: {
+        id: fileId,
+        storages: {
+          OR: [
+            { owner_id: user.userId },
+            {
+              storage_permissions: {
+                some: { user_id: user.userId }
+              }
+            }
+          ]
+        }
+      }
+    })
+
+    if (!file) {
+      return NextResponse.json(
+        { error: 'File not found or access denied' },
+        { status: 404 }
+      )
+    }
+
     const shares = await prisma.file_shares.findMany({
       where: {
         file_id: fileId,
-        created_by: user.userId
       },
       orderBy: { created_at: 'desc' }
     })
