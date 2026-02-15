@@ -82,6 +82,7 @@ function LoginForm() {
       router.replace(destination)
     } catch (err: any) {
       setError(err.response?.data?.detail || err.message || 'Login failed. Please check your credentials.')
+      setTimeout(() => setError(''), 5000)
     } finally {
       setLoading(false)
     }

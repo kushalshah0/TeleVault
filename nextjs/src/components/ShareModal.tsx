@@ -108,6 +108,7 @@ export default function ShareModal({ isOpen, onClose, file, onShareCreated }: Sh
       onShareCreated?.()
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to create share link')
+      setTimeout(() => setError(''), 3000)
     } finally {
       setIsLoading(false)
     }
@@ -142,6 +143,7 @@ export default function ShareModal({ isOpen, onClose, file, onShareCreated }: Sh
       setShareLinks(prev => prev.filter(s => s.id !== shareId))
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to delete share link')
+      setTimeout(() => setError(''), 3000)
     } finally {
       setDeletingId(null)
     }
