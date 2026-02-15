@@ -7,8 +7,6 @@ import { authAPI, storageAPI } from '@/utils/api-client'
 import { ModernLoader } from '@/components/ModernLoader'
 import { DashboardDataContext } from '@/context/DashboardContext'
 
-export { useDashboardData } from '@/context/DashboardContext'
-
 export default function DashboardLayout({
   children,
 }: {

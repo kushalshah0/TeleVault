@@ -1,7 +1,7 @@
 'use client'
 
 import StorageView from '@/components/StorageView'
-import { useDashboardData } from '../../layout'
+import { useDashboardData } from '@/context/DashboardContext'
 
 export default function StoragePage() {
   const { searchQuery, searchTrigger, clearSearch } = useDashboardData()

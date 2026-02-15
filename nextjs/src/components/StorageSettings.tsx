@@ -41,9 +41,10 @@ function StorageSettings({ storage, isOpen, onClose, onUpdate, onDelete }: Stora
   
   const [members, setMembers] = useState<Member[]>([]);
   const [loadingMembers, setLoadingMembers] = useState(false);
-  const [inviteEmail, setInviteEmail] = useState('');
-  const [inviting, setInviting] = useState(false);
-  const [inviteError, setInviteError] = useState('');
+  const [addEmail, setAddEmail] = useState('');
+  const [addRole, setAddRole] = useState<'viewer' | 'editor' | 'admin'>('viewer');
+  const [adding, setAdding] = useState(false);
+  const [addError, setAddError] = useState('');
   const [updatingRoleId, setUpdatingRoleId] = useState<number | null>(null);
   const [removingId, setRemovingId] = useState<number | null>(null);
 
@@ -141,12 +142,11 @@ function StorageSettings({ storage, isOpen, onClose, onUpdate, onDelete }: Stora
     }
   };
 
-  const handleInvite = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!inviteEmail.trim() || inviting || !storage) return;
+  const handleAddUser = async () => {
+    if (!addEmail.trim() || adding || !storage) return;
 
-    setInviting(true);
-    setInviteError('');
+    setAdding(true);
+    setAddError('');
     
     try {
       const token = localStorage.getItem('accessToken')
@@ -156,22 +156,23 @@ function StorageSettings({ storage, isOpen, onClose, onUpdate, onDelete }: Stora
           'Content-Type': 'application/json',
           ...(token ? { Authorization: `Bearer ${token}` } : {})
         },
-        body: JSON.stringify({ email: inviteEmail.trim() })
+        body: JSON.stringify({ email: addEmail.trim(), role: addRole })
       })
 
       const data = await response.json()
 
       if (!response.ok) {
-        throw new Error(data.error || 'Failed to invite member')
+        throw new Error(data.error || 'Failed to add member')
       }
 
       setMembers(prev => [data, ...prev])
-      setInviteEmail('')
+      setAddEmail('')
+      setAddRole('viewer')
     } catch (error: any) {
-      console.error('Invite error:', error)
-      setInviteError(error.message || 'Failed to invite member')
+      console.error('Add user error:', error)
+      setAddError(error.message || 'Failed to add member')
     } finally {
-      setInviting(false)
+      setAdding(false)
     }
   };
 
@@ -338,34 +339,48 @@ function StorageSettings({ storage, isOpen, onClose, onUpdate, onDelete }: Stora
 
         {activeTab === 'access' && (
           <div className="space-y-6">
-            <Card>
-              <div className="p-4">
-                <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-4">
-                  Invite Members
-                </h3>
-                <form onSubmit={handleInvite} className="space-y-3">
-                  <Input
-                    placeholder="Enter email address"
-                    value={inviteEmail}
-                    onChange={(e) => {
-                      setInviteEmail(e.target.value)
-                      setInviteError('')
-                    }}
-                    className="flex-1"
-                  />
-                  {inviteError && (
-                    <p className="text-sm text-red-500">{inviteError}</p>
-                  )}
-                  <Button type="submit" disabled={inviting || !inviteEmail.trim()}>
-                    {inviting ? 'Inviting...' : 'Invite'}
-                  </Button>
-                </form>
+            <Card className="p-4">
+              <div className="flex gap-3 items-start">
+                <Input
+                  placeholder="Enter email address"
+                  value={addEmail}
+                  onChange={(e) => {
+                    setAddEmail(e.target.value)
+                    setAddError('')
+                  }}
+                  className="flex-1"
+                />
+                <Dropdown
+                  trigger={
+                    <button className="px-3 py-2 h-10 rounded-lg border border-border bg-background text-foreground flex items-center gap-2 hover:bg-accent">
+                      {addRole.charAt(0).toUpperCase() + addRole.slice(1)}
+                      <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                      </svg>
+                    </button>
+                  }
+                >
+                  {roles.map(role => (
+                    <DropdownItem
+                      key={role.value}
+                      onClick={() => setAddRole(role.value as 'viewer' | 'editor' | 'admin')}
+                    >
+                      {role.label}
+                    </DropdownItem>
+                  ))}
+                </Dropdown>
+                <Button onClick={handleAddUser} disabled={adding || !addEmail.trim()} className="h-10">
+                  {adding ? '...' : 'Add'}
+                </Button>
               </div>
+              {addError && (
+                <p className="text-sm text-red-500 mt-2">{addError}</p>
+              )}
             </Card>
 
             <div>
               <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-4">
-                Members ({members.length})
+                Users ({members.length})
               </h3>
               {loadingMembers ? (
                 <div className="text-center py-8 text-gray-500">Loading...</div>
