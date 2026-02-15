@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import toast from 'react-hot-toast'
 import { authAPI } from '@/utils/api-client'
 import { Button, Input, Card } from '@/components/ui'
+import { Loader } from '@/components/ModernLoader'
 import ThemeToggle from '@/components/ThemeToggle'
 
 function LoginForm() {
@@ -128,7 +129,7 @@ function LoginForm() {
       <div className="flex-1 flex items-center justify-center px-4 py-8">
         {checkingAuth ? (
           <div className="flex items-center justify-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+            <Loader size="lg" />
           </div>
         ) : (
           <Card className="w-full max-w-md p-8 rounded-3xl">
@@ -257,7 +258,7 @@ function LoginForm() {
 function LoadingFallback() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
-      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
+      <Loader size="lg" />
     </div>
   )
 }

@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { Modal } from './ui/Modal'
 import { Button } from './ui/Button'
 import { Input } from './ui/Input'
+import { Loader } from './ModernLoader'
 
 interface ShareModalProps {
   isOpen: boolean
@@ -193,7 +194,7 @@ export default function ShareModal({ isOpen, onClose, file, onShareCreated }: Sh
       <div className="space-y-6">
         {isLoadingDetails ? (
           <div className="flex items-center justify-center py-8">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+            <Loader size="lg" />
           </div>
         ) : shareLink ? (
           <div className={`p-4 rounded-lg ${

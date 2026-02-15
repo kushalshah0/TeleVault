@@ -1,6 +1,22 @@
 'use client'
 
 /**
+ * Simple Spinner Loader
+ */
+export function Loader({ size = 'md', className = '' }: { size?: 'sm' | 'md' | 'lg' | 'xl'; className?: string }) {
+  const sizes = {
+    sm: 'w-4 h-4',
+    md: 'w-6 h-6',
+    lg: 'w-8 h-8',
+    xl: 'w-10 h-10',
+  };
+
+  return (
+    <div className={`inline-block animate-spin rounded-full border-b-2 border-primary ${sizes[size]} ${className}`}></div>
+  );
+}
+
+/**
  * Modern Spinner Component - Circular spinner with gradient effect
  */
 export function Spinner({ size = 'md', className = '' }: { size?: 'sm' | 'md' | 'lg' | 'xl'; className?: string }) {
