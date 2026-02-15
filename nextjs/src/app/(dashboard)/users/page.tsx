@@ -34,7 +34,7 @@ export default function AdminUsersPage() {
   const fetchUsers = async () => {
     try {
       const token = localStorage.getItem('accessToken') || sessionStorage.getItem('accessToken')
-      const res = await fetch(`${window.location.origin}/api/admin/users`, {
+      const res = await fetch(`${window.location.origin}/api/users`, {
         headers: { Authorization: `Bearer ${token}` }
       })
       if (res.ok) {
@@ -55,7 +55,7 @@ export default function AdminUsersPage() {
 
     try {
       const token = localStorage.getItem('accessToken') || sessionStorage.getItem('accessToken')
-      const url = editingUser ? `${window.location.origin}/api/admin/users/${editingUser.id}` : `${window.location.origin}/api/admin/users`
+      const url = editingUser ? `${window.location.origin}/api/users/${editingUser.id}` : `${window.location.origin}/api/users`
       const method = editingUser ? 'PATCH' : 'POST'
 
       const res = await fetch(url, {
@@ -102,7 +102,7 @@ export default function AdminUsersPage() {
 
     try {
       const token = localStorage.getItem('accessToken') || sessionStorage.getItem('accessToken')
-      const res = await fetch(`${window.location.origin}/api/admin/users/${userId}`, {
+      const res = await fetch(`${window.location.origin}/api/users/${userId}`, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` }
       })
@@ -121,7 +121,7 @@ export default function AdminUsersPage() {
   const toggleActive = async (user: User) => {
     try {
       const token = localStorage.getItem('accessToken') || sessionStorage.getItem('accessToken')
-      const res = await fetch(`${window.location.origin}/api/admin/users/${user.id}`, {
+      const res = await fetch(`${window.location.origin}/api/users/${user.id}`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
@@ -141,7 +141,7 @@ export default function AdminUsersPage() {
   const toggleAdmin = async (user: User) => {
     try {
       const token = localStorage.getItem('accessToken') || sessionStorage.getItem('accessToken')
-      const res = await fetch(`${window.location.origin}/api/admin/users/${user.id}`, {
+      const res = await fetch(`${window.location.origin}/api/users/${user.id}`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
