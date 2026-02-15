@@ -141,9 +141,9 @@ function Sidebar({ storages = [], currentStorage, onStorageChange, usage, isOpen
 
             {isAdmin && (
               <button
-                onClick={() => handleNavigation(() => router.push('/admin/users'))}
+                onClick={() => handleNavigation(() => router.push('/users'))}
                 className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all font-medium
-                  ${isActive('/admin/users')
+                  ${isActive('/users')
                     ? 'bg-primary text-primary-foreground shadow-sm'
                     : 'text-foreground hover:bg-accent'
                   }`}
