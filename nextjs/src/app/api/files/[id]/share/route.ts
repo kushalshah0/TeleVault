@@ -171,7 +171,8 @@ export async function GET(
       max_downloads: share.max_downloads,
       download_count: share.download_count,
       created_at: share.created_at,
-      is_expired: share.expires_at ? new Date() > share.expires_at : false
+      is_expired: share.expires_at ? new Date() > share.expires_at : false,
+      password: share.password
     })
 
   } catch (error) {
