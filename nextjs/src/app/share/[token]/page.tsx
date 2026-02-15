@@ -334,7 +334,7 @@ export default function SharePage() {
             )}
 
             <div className="text-center mb-6">
-              <div className="w-16 h-16 bg-primary-100 dark:bg-primary-900/30 rounded-2xl flex items-center justify-center mx-auto mb-4">
+              <div className="w-16 h-16 bg-primary-100 dark:bg-primary-900/30 rounded-xl border-2 border-gray-400 dark:border-gray-500 shadow-md flex items-center justify-center mx-auto mb-4">
                 {getFileIcon(fileInfo?.mime_type || '')}
               </div>
               <h2 className="font-semibold text-lg text-gray-900 dark:text-white">
@@ -343,6 +343,15 @@ export default function SharePage() {
             </div>
 
             <div className="space-y-2 mb-6 text-sm">
+              <div className="flex items-center justify-between py-2 px-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
+                <span className="text-gray-500 dark:text-gray-400 flex items-center gap-2">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                  </svg>
+                  Shared by
+                </span>
+                <span className="font-medium text-gray-900 dark:text-white">{fileInfo?.created_by || 'Unknown'}</span>
+              </div>
               <div className="flex items-center justify-between py-2 px-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
                 <span className="text-gray-500 dark:text-gray-400 flex items-center gap-2">
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
