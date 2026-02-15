@@ -33,12 +33,41 @@ export default function ShareModal({ isOpen, onClose, file, onShareCreated }: Sh
   const [copied, setCopied] = useState(false)
   const [error, setError] = useState('')
   const [isDeleting, setIsDeleting] = useState(false)
+  const [originalValues, setOriginalValues] = useState<{expirationDays: number | ''; maxDownloads: number | ''; password: string}>({
+    expirationDays: '',
+    maxDownloads: '',
+    password: ''
+  })
+
+  const hasChanges = 
+    expirationDays !== originalValues.expirationDays ||
+    maxDownloads !== originalValues.maxDownloads ||
+    password !== originalValues.password
 
   useEffect(() => {
     if (isOpen && file) {
       fetchShareLink()
     }
   }, [isOpen, file])
+
+  useEffect(() => {
+    if (shareLink) {
+      const expDays = shareLink.expires_at 
+        ? Math.ceil((new Date(shareLink.expires_at).getTime() - Date.now()) / (1000 * 60 * 60 * 24))
+        : ''
+      const expDaysNum = (typeof expDays === 'number' && expDays > 0 ? expDays : '') as number | ''
+      const maxDownNum = (shareLink.max_downloads ? shareLink.max_downloads : '') as number | ''
+      const orig = {
+        expirationDays: expDaysNum,
+        maxDownloads: maxDownNum,
+        password: shareLink.password || ''
+      }
+      setOriginalValues(orig)
+      setExpirationDays(orig.expirationDays)
+      setMaxDownloads(orig.maxDownloads)
+      setPassword(orig.password)
+    }
+  }, [shareLink])
 
   const fetchShareLink = async () => {
     if (!file) return
@@ -93,10 +122,6 @@ export default function ShareModal({ isOpen, onClose, file, onShareCreated }: Sh
 
       const data = await response.json()
       await fetchShareLink()
-
-      setExpirationDays('')
-      setMaxDownloads('')
-      setPassword('')
       
       onShareCreated?.()
     } catch (err) {
@@ -204,8 +229,9 @@ export default function ShareModal({ isOpen, onClose, file, onShareCreated }: Sh
               <div className="mt-3 flex items-center gap-2">
                 <span className="text-xs text-gray-500 dark:text-gray-400">Password:</span>
                 <code className="text-xs bg-gray-200 dark:bg-gray-700 px-2 py-1 rounded font-mono">
-                  {showPassword ? shareLink.password : '••••••••'}
+                  {showPassword ? shareLink.password : '•'.repeat(shareLink.password.length)}
                 </code>
+                <span className="text-xs text-gray-400">({shareLink.password.length} chars)</span>
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
@@ -285,10 +311,10 @@ export default function ShareModal({ isOpen, onClose, file, onShareCreated }: Sh
           <div className="flex gap-2">
             <Button
               type="submit"
-              disabled={isLoading}
+              disabled={isLoading || (shareLink ? !hasChanges : false)}
               className="flex-1"
             >
-              {isLoading ? 'Saving...' : shareLink ? 'Update Link' : 'Create Link'}
+              {isLoading ? 'Saving...' : shareLink ? (hasChanges ? 'Update Link' : 'No Changes') : 'Create Link'}
             </Button>
             {shareLink && (
               <Button
