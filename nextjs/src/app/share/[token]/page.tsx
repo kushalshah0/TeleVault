@@ -97,6 +97,7 @@ export default function SharePage() {
         if (response.status === 401 && data.requires_password) {
           setError('Incorrect password')
           setDownloading(false)
+          setTimeout(() => setError(''), 3000)
           return
         }
         throw new Error(data.error || 'Download failed')
