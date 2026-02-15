@@ -192,6 +192,8 @@ export default function DashboardLayout({
     localStorage.removeItem('accessToken')
     localStorage.removeItem('refreshToken')
     localStorage.removeItem('rememberMe')
+    localStorage.removeItem('user')
+    localStorage.removeItem('televault_storages_cache')
     sessionStorage.removeItem('accessToken')
     sessionStorage.removeItem('refreshToken')
     setUser(null)
