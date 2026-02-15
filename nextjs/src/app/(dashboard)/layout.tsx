@@ -191,6 +191,9 @@ export default function DashboardLayout({
   const handleLogout = () => {
     localStorage.removeItem('accessToken')
     localStorage.removeItem('refreshToken')
+    localStorage.removeItem('rememberMe')
+    sessionStorage.removeItem('accessToken')
+    sessionStorage.removeItem('refreshToken')
     setUser(null)
     setStorages([])
     setUsage(null)

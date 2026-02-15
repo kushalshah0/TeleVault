@@ -18,12 +18,21 @@ function LoginForm() {
   })
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  const [checkingAuth, setCheckingAuth] = useState(true)
   const [sessionExpired, setSessionExpired] = useState(false)
   const [redirectPath, setRedirectPath] = useState<string | null>(null)
   const [rememberMe, setRememberMe] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
 
   useEffect(() => {
+    // Check if already logged in
+    const token = localStorage.getItem('accessToken') || sessionStorage.getItem('accessToken')
+    if (token) {
+      router.replace('/dashboard')
+      return
+    }
+    setCheckingAuth(false)
+
     const expired = searchParams.get('expired')
     const from = searchParams.get('from')
     
@@ -38,7 +47,7 @@ function LoginForm() {
     } else if (from && from !== '/login') {
       setRedirectPath(from)
     }
-  }, [searchParams])
+  }, [searchParams, router])
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({
@@ -59,9 +68,11 @@ function LoginForm() {
       if (rememberMe) {
         localStorage.setItem('accessToken', response.data.accessToken)
         localStorage.setItem('refreshToken', response.data.refreshToken)
+        localStorage.setItem('rememberMe', 'true')
       } else {
         sessionStorage.setItem('accessToken', response.data.accessToken)
         sessionStorage.setItem('refreshToken', response.data.refreshToken)
+        localStorage.removeItem('rememberMe')
       }
       localStorage.setItem('user', JSON.stringify(response.data.user))
 
@@ -114,9 +125,14 @@ function LoginForm() {
         </div>
       </header>
       <div className="flex-1 flex items-center justify-center px-4 py-8">
-        <Card className="w-full max-w-md p-8 rounded-3xl">
+        {checkingAuth ? (
+          <div className="flex items-center justify-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+          </div>
+        ) : (
+          <Card className="w-full max-w-md p-8 rounded-3xl">
           <div className="text-center mb-8">
-            <p className="text-base text-gray-600 dark:text-gray-400">
+            <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">
               {isLogin ? 'Welcome back!' : 'Create your account'}
             </p>
           </div>
@@ -231,6 +247,7 @@ function LoginForm() {
             By signing in, you agree to our Terms of Service and Privacy Policy
           </p>
         </Card>
+        )}
       </div>
     </div>
   )
