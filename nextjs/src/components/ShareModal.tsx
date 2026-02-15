@@ -41,7 +41,7 @@ export default function ShareModal({ isOpen, onClose, file, onShareCreated }: Sh
   const fetchShareLinks = async () => {
     if (!file) return
     try {
-      const token = localStorage.getItem('accessToken')
+      const token = localStorage.getItem('accessToken') || sessionStorage.getItem('accessToken')
       const response = await fetch(`/api/files/${file.id}/share`, {
         headers: token ? { Authorization: `Bearer ${token}` } : {}
       })
@@ -62,7 +62,7 @@ export default function ShareModal({ isOpen, onClose, file, onShareCreated }: Sh
     setError('')
 
     try {
-      const token = localStorage.getItem('accessToken')
+      const token = localStorage.getItem('accessToken') || sessionStorage.getItem('accessToken')
       const body: Record<string, unknown> = {}
       
       if (expirationDays !== '') {
@@ -128,7 +128,7 @@ export default function ShareModal({ isOpen, onClose, file, onShareCreated }: Sh
     
     setDeletingId(shareId)
     try {
-      const token = localStorage.getItem('accessToken')
+      const token = localStorage.getItem('accessToken') || sessionStorage.getItem('accessToken')
       const response = await fetch(`/api/files/${file.id}/share?share_id=${shareId}`, {
         method: 'DELETE',
         headers: token ? { Authorization: `Bearer ${token}` } : {}

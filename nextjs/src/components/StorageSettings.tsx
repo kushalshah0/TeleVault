@@ -70,7 +70,7 @@ function StorageSettings({ storage, isOpen, onClose, onUpdate, onDelete }: Stora
     if (!storage) return
     setLoadingMembers(true)
     try {
-      const token = localStorage.getItem('accessToken')
+      const token = localStorage.getItem('accessToken') || sessionStorage.getItem('accessToken')
       const response = await fetch(`/api/storages/${storage.id}/permissions`, {
         headers: token ? { Authorization: `Bearer ${token}` } : {}
       })
@@ -94,7 +94,7 @@ function StorageSettings({ storage, isOpen, onClose, onUpdate, onDelete }: Stora
 
     setSaving(true);
     try {
-      const token = localStorage.getItem('accessToken')
+      const token = localStorage.getItem('accessToken') || sessionStorage.getItem('accessToken')
       const response = await fetch(`/api/storages/${storage.id}`, {
         method: 'PATCH',
         headers: {
@@ -122,7 +122,7 @@ function StorageSettings({ storage, isOpen, onClose, onUpdate, onDelete }: Stora
 
     setDeleting(true);
     try {
-      const token = localStorage.getItem('accessToken')
+      const token = localStorage.getItem('accessToken') || sessionStorage.getItem('accessToken')
       const response = await fetch(`/api/storages/${storage.id}`, {
         method: 'DELETE',
         headers: token ? { Authorization: `Bearer ${token}` } : {}
@@ -149,7 +149,7 @@ function StorageSettings({ storage, isOpen, onClose, onUpdate, onDelete }: Stora
     setAddError('');
     
     try {
-      const token = localStorage.getItem('accessToken')
+      const token = localStorage.getItem('accessToken') || sessionStorage.getItem('accessToken')
       const response = await fetch(`/api/storages/${storage.id}/permissions`, {
         method: 'POST',
         headers: {
@@ -181,7 +181,7 @@ function StorageSettings({ storage, isOpen, onClose, onUpdate, onDelete }: Stora
     
     setUpdatingRoleId(memberId)
     try {
-      const token = localStorage.getItem('accessToken')
+      const token = localStorage.getItem('accessToken') || sessionStorage.getItem('accessToken')
       const member = members.find(m => m.id === memberId)
       
       const response = await fetch(`/api/storages/${storage.id}/permissions`, {
@@ -217,7 +217,7 @@ function StorageSettings({ storage, isOpen, onClose, onUpdate, onDelete }: Stora
 
     setRemovingId(memberId)
     try {
-      const token = localStorage.getItem('accessToken')
+      const token = localStorage.getItem('accessToken') || sessionStorage.getItem('accessToken')
       const response = await fetch(`/api/storages/${storage.id}/permissions?user_id=${member.user_id}`, {
         method: 'DELETE',
         headers: token ? { Authorization: `Bearer ${token}` } : {}

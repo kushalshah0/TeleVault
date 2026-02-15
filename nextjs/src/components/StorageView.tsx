@@ -128,7 +128,7 @@ function StorageView({ onFileOperation, searchQuery, searchTrigger, onClearSearc
       // If we're in a subfolder, load folder path (but NOT contents - let useEffect handle that)
       if (initialFolderId) {
         try {
-          const token = typeof window !== 'undefined' ? localStorage.getItem('accessToken') : null;
+          const token = typeof window !== 'undefined' ? (localStorage.getItem('accessToken') || sessionStorage.getItem('accessToken')) : null;
           const response = await fetch(`/api/folders/${initialFolderId}`, {
             headers: token ? { Authorization: `Bearer ${token}` } : {}
           });
