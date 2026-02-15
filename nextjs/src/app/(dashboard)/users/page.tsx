@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { Modal } from '@/components/ui/Modal'
 
 interface User {
   id: number
@@ -263,13 +264,17 @@ export default function AdminUsersPage() {
       </div>
 
       {showModal && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
-          <div className="bg-card rounded-lg border border-border w-full max-w-md p-6">
-            <h2 className="text-xl font-semibold text-foreground mb-4">
-              {editingUser ? 'Edit User' : 'Add User'}
-            </h2>
-
-            <form onSubmit={handleSubmit} className="space-y-4">
+        <Modal
+          isOpen={showModal}
+          onClose={() => {
+            setShowModal(false)
+            setEditingUser(null)
+            setError('')
+            setFormData({ username: '', email: '', password: '', is_admin: false, is_active: true })
+          }}
+          title={editingUser ? 'Edit User' : 'Add User'}
+        >
+          <form onSubmit={handleSubmit} className="space-y-4">
               {error && (
                 <div className="p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-red-600 dark:text-red-400 text-sm">
                   {error}
@@ -383,8 +388,7 @@ export default function AdminUsersPage() {
                 </button>
               </div>
             </form>
-          </div>
-        </div>
+        </Modal>
       )}
     </div>
   )
