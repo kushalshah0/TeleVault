@@ -310,8 +310,8 @@ export default function ShareModal({ isOpen, onClose, file, onShareCreated }: Sh
           <div className="flex gap-2">
             <Button
               type="submit"
-              disabled={isLoading}
-              className={`flex-1 ${shareLink && !hasChanges ? 'opacity-50 cursor-not-allowed' : ''}`}
+              disabled={isLoading || (shareLink ? !hasChanges : false)}
+              className="flex-1"
             >
               {isLoading ? 'Saving...' : shareLink ? 'Update' : 'Create Link'}
             </Button>
