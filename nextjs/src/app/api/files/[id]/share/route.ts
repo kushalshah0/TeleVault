@@ -55,6 +55,38 @@ export async function POST(
       )
     }
 
+    // Check if share link already exists for this file
+    const existingShare = await prisma.file_shares.findFirst({
+      where: { file_id: fileId }
+    })
+
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || `${request.nextUrl.origin}`
+
+    if (existingShare) {
+      // Update existing share link
+      const expires_at = expires_in_days 
+        ? new Date(Date.now() + expires_in_days * 24 * 60 * 60 * 1000)
+        : null
+
+      const updatedShare = await prisma.file_shares.update({
+        where: { id: existingShare.id },
+        data: {
+          expires_at,
+          max_downloads,
+          password: password || null,
+        }
+      })
+
+      return NextResponse.json({
+        share_url: `${baseUrl}/share/${updatedShare.token}`,
+        expires_at: updatedShare.expires_at,
+        max_downloads: updatedShare.max_downloads,
+        created_at: updatedShare.created_at,
+        updated: true
+      })
+    }
+
+    // Create new share link
     const token = randomBytes(8).toString('hex')
     const expires_at = expires_in_days 
       ? new Date(Date.now() + expires_in_days * 24 * 60 * 60 * 1000)
@@ -71,14 +103,12 @@ export async function POST(
       }
     })
 
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || `${request.nextUrl.origin}`
-    const shareUrl = `${baseUrl}/share/${token}`
-
     return NextResponse.json({
-      share_url: shareUrl,
+      share_url: `${baseUrl}/share/${token}`,
       expires_at: expires_at,
       max_downloads,
-      created_at: fileShare.created_at
+      created_at: fileShare.created_at,
+      updated: false
     })
 
   } catch (error) {
@@ -122,16 +152,19 @@ export async function GET(
       )
     }
 
-    const shares = await prisma.file_shares.findMany({
-      where: {
-        file_id: fileId,
-      },
+    // Get single share link for this file
+    const share = await prisma.file_shares.findFirst({
+      where: { file_id: fileId },
       orderBy: { created_at: 'desc' }
     })
 
+    if (!share) {
+      return NextResponse.json(null)
+    }
+
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
     
-    return NextResponse.json(shares.map(share => ({
+    return NextResponse.json({
       id: share.id,
       share_url: `${baseUrl}/share/${share.token}`,
       expires_at: share.expires_at,
@@ -139,12 +172,12 @@ export async function GET(
       download_count: share.download_count,
       created_at: share.created_at,
       is_expired: share.expires_at ? new Date() > share.expires_at : false
-    })))
+    })
 
   } catch (error) {
     console.error('List shares error:', error)
     return NextResponse.json(
-      { error: 'Failed to list share links' },
+      { error: 'Failed to get share link' },
       { status: 500 }
     )
   }
@@ -157,32 +190,11 @@ export async function DELETE(
   try {
     const user = await requireAuth(request)
     const { id } = await params
-    const url = new URL(request.url)
-    const shareId = url.searchParams.get('share_id')
+    const fileId = parseInt(id)
 
-    if (!shareId) {
-      return NextResponse.json(
-        { error: 'Share ID is required' },
-        { status: 400 }
-      )
-    }
-
-    const share = await prisma.file_shares.findUnique({
-      where: { id: parseInt(shareId) },
-      include: { files: { include: { storages: true } } }
-    })
-
-    if (!share) {
-      return NextResponse.json(
-        { error: 'Share link not found' },
-        { status: 404 }
-      )
-    }
-
-    // Check if user has access to the file
     const file = await prisma.files.findFirst({
       where: {
-        id: share.file_id,
+        id: fileId,
         storages: {
           OR: [
             { owner_id: user.userId },
@@ -203,10 +215,21 @@ export async function DELETE(
       )
     }
 
-    // Admin can delete any share, regular users can only delete their own
+    const share = await prisma.file_shares.findFirst({
+      where: { file_id: fileId }
+    })
+
+    if (!share) {
+      return NextResponse.json(
+        { error: 'No share link to delete' },
+        { status: 404 }
+      )
+    }
+
+    // Only creator or admin can delete
     if (!user.isAdmin && share.created_by !== user.userId) {
       return NextResponse.json(
-        { error: 'You can only delete your own share links' },
+        { error: 'You can only delete your own share link' },
         { status: 403 }
       )
     }
