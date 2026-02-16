@@ -135,11 +135,6 @@ export async function POST(
       }))
     ]
 
-    // If this is a download request
-    if (request.url.includes('/download')) {
-      return handleDownload(request, share, currentFolder, item_ids, all)
-    }
-
     return NextResponse.json({
       folder: {
         name: currentFolder.name,
@@ -157,36 +152,6 @@ export async function POST(
     console.error('Folder share error:', error)
     return NextResponse.json(
       { error: 'Failed to access folder' },
-      { status: 500 }
-    )
-  }
-}
-
-async function handleDownload(
-  request: NextRequest,
-  share: any,
-  folder: any,
-  item_ids?: number[],
-  all?: boolean
-) {
-  try {
-    // Increment download count
-    await prisma.folder_shares.update({
-      where: { id: share.id },
-      data: { download_count: { increment: 1 } }
-    })
-
-    // For now, return success - actual zip download will be implemented
-    return NextResponse.json({
-      success: true,
-      message: 'Download initiated',
-      folder_name: folder.name
-    })
-
-  } catch (error) {
-    console.error('Download error:', error)
-    return NextResponse.json(
-      { error: 'Download failed' },
       { status: 500 }
     )
   }

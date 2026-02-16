@@ -9,7 +9,8 @@ import { Loader } from './ModernLoader'
 interface ShareModalProps {
   isOpen: boolean
   onClose: () => void
-  file: { id: number; name: string } | null
+  item: { id: number; name: string } | null
+  itemType?: 'file' | 'folder'
   onShareCreated?: () => void
 }
 
@@ -24,7 +25,7 @@ interface ShareLink {
   password: string | null
 }
 
-export default function ShareModal({ isOpen, onClose, file, onShareCreated }: ShareModalProps) {
+export default function ShareModal({ isOpen, onClose, item, itemType = 'file', onShareCreated }: ShareModalProps) {
   const [expirationDays, setExpirationDays] = useState<number | ''>('')
   const [maxDownloads, setMaxDownloads] = useState<number | ''>('')
   const [password, setPassword] = useState('')
@@ -47,10 +48,10 @@ export default function ShareModal({ isOpen, onClose, file, onShareCreated }: Sh
     password !== originalValues.password
 
   useEffect(() => {
-    if (isOpen && file) {
+    if (isOpen && item) {
       fetchShareLink()
     }
-  }, [isOpen, file])
+  }, [isOpen, item])
 
   useEffect(() => {
     if (shareLink) {
@@ -72,11 +73,12 @@ export default function ShareModal({ isOpen, onClose, file, onShareCreated }: Sh
   }, [shareLink])
 
   const fetchShareLink = async () => {
-    if (!file) return
+    if (!item) return
     setIsLoadingDetails(true)
     try {
       const token = localStorage.getItem('accessToken') || sessionStorage.getItem('accessToken')
-      const response = await fetch(`/api/files/${file.id}/share`, {
+      const endpoint = itemType === 'folder' ? 'folders' : 'files'
+      const response = await fetch(`/api/${endpoint}/${item.id}/share`, {
         headers: token ? { Authorization: `Bearer ${token}` } : {}
       })
       if (response.ok) {
@@ -92,7 +94,7 @@ export default function ShareModal({ isOpen, onClose, file, onShareCreated }: Sh
 
   const saveShareLink = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!file) return
+    if (!item) return
 
     setIsLoading(true)
     setError('')
@@ -111,7 +113,7 @@ export default function ShareModal({ isOpen, onClose, file, onShareCreated }: Sh
         body.password = password
       }
 
-      const response = await fetch(`/api/files/${file.id}/share`, {
+      const response = await fetch(`/api/${itemType === 'folder' ? 'folders' : 'files'}/${item.id}/share`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -148,12 +150,12 @@ export default function ShareModal({ isOpen, onClose, file, onShareCreated }: Sh
   }
 
   const deleteShareLink = async () => {
-    if (!file) return
+    if (!item) return
     
     setIsDeleting(true)
     try {
       const token = localStorage.getItem('accessToken') || sessionStorage.getItem('accessToken')
-      const response = await fetch(`/api/files/${file.id}/share`, {
+      const response = await fetch(`/api/${itemType === 'folder' ? 'folders' : 'files'}/${item.id}/share`, {
         method: 'DELETE',
         headers: token ? { Authorization: `Bearer ${token}` } : {}
       })
@@ -188,7 +190,7 @@ export default function ShareModal({ isOpen, onClose, file, onShareCreated }: Sh
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title={`Share "${file?.name}"`}
+      title={`Share ${itemType === 'folder' ? 'Folder' : 'File'}: "${item?.name}"`}
       size="lg"
     >
       <div className="space-y-6">

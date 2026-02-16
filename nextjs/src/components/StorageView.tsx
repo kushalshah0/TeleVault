@@ -102,7 +102,7 @@ function StorageView({ onFileOperation, searchQuery, searchTrigger, onClearSearc
 
   // Share modal
   const [showShareModal, setShowShareModal] = useState(false);
-  const [sharingFile, setSharingFile] = useState<{ id: number; name: string } | null>(null);
+  const [sharingItem, setSharingItem] = useState<{ id: number; name: string; type: 'file' | 'folder' } | null>(null);
 
   // Custom hooks
   const { uploading, progress, uploadFile } = useFileUpload();
@@ -698,7 +698,7 @@ function StorageView({ onFileOperation, searchQuery, searchTrigger, onClearSearc
           }
         },
         { icon: '⬇️', label: 'Download', onClick: () => handleFileDownload(item) },
-        { icon: '🔗', label: 'Share', onClick: () => { setSharingFile({ id: item.id, name: item.name }); setShowShareModal(true); } }
+        { icon: '🔗', label: 'Share', onClick: () => { setSharingItem({ id: item.id, name: item.name, type: 'file' }); setShowShareModal(true); } }
       );
 
       // Add Edit option for text files (only for owner, admin, editor)
@@ -716,7 +716,7 @@ function StorageView({ onFileOperation, searchQuery, searchTrigger, onClearSearc
         );
       }
     } else if (type === 'folder') {
-      // Add Rename and Delete (only for owner, admin, editor)
+      // Add Rename, Open, and Delete options
       if (['OWNER', 'ADMIN', 'EDITOR'].includes(userRole)) {
         menuItems.push(
           { icon: '✏️', label: 'Rename', onClick: () => showRenameDialog(item, 'folder') },
@@ -1168,10 +1168,10 @@ function StorageView({ onFileOperation, searchQuery, searchTrigger, onClearSearc
                   </button>
                 )}
 
-                {/* Share Button - Only for single file */}
-                {selectionCount === 1 && selectedItems[0].type === 'file' && (
+                {/* Share Button - For single file or folder */}
+                {selectionCount === 1 && (
                   <button
-                    onClick={() => { setSharingFile({ id: selectedItems[0].id, name: selectedItems[0].name || '' }); setShowShareModal(true); }}
+                    onClick={() => { setSharingItem({ id: selectedItems[0].id, name: selectedItems[0].name || '', type: selectedItems[0].type || 'file' }); setShowShareModal(true); }}
                     className="p-1.5 sm:p-2 hover:bg-primary-100 dark:hover:bg-primary-800 rounded-lg 
                       transition-colors text-gray-700 dark:text-gray-300 flex-shrink-0"
                     title="Share"
@@ -1183,7 +1183,7 @@ function StorageView({ onFileOperation, searchQuery, searchTrigger, onClearSearc
                   </button>
                 )}
 
-                {/* Open Button - Only for single folder */}
+                {/* Open Folder Button - Only for single folder */}
                 {selectionCount === 1 && selectedItems[0].type === 'folder' && (
                   <button
                     onClick={() => handleFolderOpen(selectedItems[0])}
@@ -1690,9 +1690,10 @@ function StorageView({ onFileOperation, searchQuery, searchTrigger, onClearSearc
         isOpen={showShareModal}
         onClose={() => {
           setShowShareModal(false);
-          setSharingFile(null);
+          setSharingItem(null);
         }}
-        file={sharingFile}
+        item={sharingItem}
+        itemType={sharingItem?.type || 'file'}
       />
     </div>
   );

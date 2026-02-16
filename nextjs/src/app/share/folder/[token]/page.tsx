@@ -111,13 +111,63 @@ export default function FolderSharePage() {
     setDownloading(true)
     try {
       const baseUrl = window.location.origin
-      const downloadUrl = item 
-        ? `${baseUrl}/api/share/folder/${token}/download?item_id=${item.id}&type=${item.type}`
-        : selectedItems.size > 0
-          ? `${baseUrl}/api/share/folder/${token}/download`
-          : `${baseUrl}/api/share/folder/${token}/download?all=true`
+      
+      // Check if this is a single file download (either clicked directly or single file selected)
+      const isSingleFile = (item && item.type === 'file') || 
+        (selectedItems.size === 1 && Array.from(selectedItems).every(id => items.find(i => i.id === id)?.type === 'file'))
+      
+      // If single file, use direct download (no zip)
+      if (isSingleFile) {
+        const fileId = item?.id || Array.from(selectedItems)[0]
+        const response = await fetch(`${baseUrl}/api/share/folder/${token}/download-file`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ file_id: fileId, password: password || undefined })
+        })
 
-      const body = item ? {} : (selectedItems.size > 0 ? { item_ids: Array.from(selectedItems) } : { all: true })
+        if (!response.ok) {
+          const data = await response.json()
+          if (response.status === 401 && data.requires_password) {
+            setError('Incorrect password')
+            setDownloading(false)
+            setTimeout(() => setError(''), 3000)
+            return
+          }
+          throw new Error(data.error || 'Download failed')
+        }
+
+        const fileInfo = items.find(i => i.id === fileId)
+        const contentDisposition = response.headers.get('content-disposition')
+        let filename = fileInfo?.name || 'download'
+        
+        if (contentDisposition) {
+          const match = contentDisposition.match(/filename\*?=UTF-8''(.+?)(?:;|$)/)
+          if (match) {
+            filename = decodeURIComponent(match[1])
+          }
+        }
+
+        const blob = await response.blob()
+        const blobUrl = window.URL.createObjectURL(blob)
+        const link = document.createElement('a')
+        link.href = blobUrl
+        link.download = filename
+        document.body.appendChild(link)
+        link.click()
+        document.body.removeChild(link)
+        window.URL.revokeObjectURL(blobUrl)
+        setDownloading(false)
+        return
+      }
+
+      // For multiple files or Download All, use zip download
+      const downloadUrl = selectedItems.size > 0
+        ? `${baseUrl}/api/share/folder/${token}/download`
+        : `${baseUrl}/api/share/folder/${token}/download?all=true`
+
+      const body = selectedItems.size > 0 
+        ? { item_ids: Array.from(selectedItems) } 
+        : { all: true }
 
       const response = await fetch(downloadUrl, {
         method: 'POST',
@@ -137,7 +187,7 @@ export default function FolderSharePage() {
       }
 
       const contentDisposition = response.headers.get('content-disposition')
-      let filename = item?.name || 'download'
+      let filename = 'download'
       
       if (contentDisposition) {
         const match = contentDisposition.match(/filename\*?=UTF-8''(.+?)(?:;|$)/)
