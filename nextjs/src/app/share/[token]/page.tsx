@@ -409,16 +409,10 @@ export default function SharePage() {
             <Button
               onClick={handleDownload}
               disabled={downloading || (requiresPassword && !password) || !!isExpired}
+              isLoading={downloading}
               className="w-full"
             >
-              {downloading ? (
-                <>
-                  <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin mr-2"></div>
-                  Downloading...
-                </>
-              ) : isExpired ? (
-                'Link Expired'
-              ) : (
+              {isExpired ? 'Link Expired' : downloading ? 'Downloading...' : (
                 <>
                   <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />

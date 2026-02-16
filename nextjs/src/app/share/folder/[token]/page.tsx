@@ -36,7 +36,8 @@ export default function FolderSharePage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [requiresPassword, setRequiresPassword] = useState(false)
-  const [downloading, setDownloading] = useState(false)
+  const [downloadingAll, setDownloadingAll] = useState(false)
+  const [downloadingSelected, setDownloadingSelected] = useState(false)
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const [theme, setTheme] = useState<'light' | 'dark'>('light')
@@ -105,20 +106,71 @@ export default function FolderSharePage() {
     fetchFolderInfo(path)
   }
 
-  const handleDownload = async (item?: FolderItem) => {
+  const handleDownloadAll = async () => {
     if (!token) return
 
-    setDownloading(true)
+    setDownloadingAll(true)
     try {
       const baseUrl = window.location.origin
       
-      // Check if this is a single file download (either clicked directly or single file selected)
-      const isSingleFile = (item && item.type === 'file') || 
-        (selectedItems.size === 1 && Array.from(selectedItems).every(id => items.find(i => i.id === id)?.type === 'file'))
+      const response = await fetch(`${baseUrl}/api/share/folder/${token}/download?all=true`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ all: true, password: password || undefined })
+      })
+
+      if (!response.ok) {
+        const data = await response.json()
+        if (response.status === 401 && data.requires_password) {
+          setError('Incorrect password')
+          setDownloadingAll(false)
+          setTimeout(() => setError(''), 3000)
+          return
+        }
+        throw new Error(data.error || 'Download failed')
+      }
+
+      const blob = await response.blob()
+      const contentDisposition = response.headers.get('content-disposition')
+      let filename = 'download'
+      
+      if (contentDisposition) {
+        const match = contentDisposition.match(/filename\*?=UTF-8''(.+?)(?:;|$)/)
+        if (match) {
+          filename = decodeURIComponent(match[1])
+        }
+      }
+
+      const blobUrl = window.URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = blobUrl
+      link.download = filename
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      window.URL.revokeObjectURL(blobUrl)
+    } catch (err) {
+      setError('Download failed')
+      setTimeout(() => setError(''), 3000)
+    } finally {
+      setDownloadingAll(false)
+    }
+  }
+
+  const handleDownloadSelected = async () => {
+    if (!token) return
+
+    setDownloadingSelected(true)
+    try {
+      const baseUrl = window.location.origin
+      
+      // Check if this is a single file download
+      const isSingleFile = selectedItems.size === 1 && 
+        Array.from(selectedItems).every(id => items.find(i => i.id === id)?.type === 'file')
       
       // If single file, use direct download (no zip)
       if (isSingleFile) {
-        const fileId = item?.id || Array.from(selectedItems)[0]
+        const fileId = Array.from(selectedItems)[0]
         const response = await fetch(`${baseUrl}/api/share/folder/${token}/download-file`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -129,7 +181,7 @@ export default function FolderSharePage() {
           const data = await response.json()
           if (response.status === 401 && data.requires_password) {
             setError('Incorrect password')
-            setDownloading(false)
+            setDownloadingSelected(false)
             setTimeout(() => setError(''), 3000)
             return
           }
@@ -156,30 +208,73 @@ export default function FolderSharePage() {
         link.click()
         document.body.removeChild(link)
         window.URL.revokeObjectURL(blobUrl)
-        setDownloading(false)
+        setDownloadingSelected(false)
         return
       }
 
-      // For multiple files or Download All, use zip download
-      const downloadUrl = selectedItems.size > 0
-        ? `${baseUrl}/api/share/folder/${token}/download`
-        : `${baseUrl}/api/share/folder/${token}/download?all=true`
-
-      const body = selectedItems.size > 0 
-        ? { item_ids: Array.from(selectedItems) } 
-        : { all: true }
-
-      const response = await fetch(downloadUrl, {
+      // For multiple files, use zip download
+      const response = await fetch(`${baseUrl}/api/share/folder/${token}/download`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...body, password: password || undefined })
+        body: JSON.stringify({ item_ids: Array.from(selectedItems), password: password || undefined })
       })
 
       if (!response.ok) {
         const data = await response.json()
         if (response.status === 401 && data.requires_password) {
           setError('Incorrect password')
-          setDownloading(false)
+          setDownloadingSelected(false)
+          setTimeout(() => setError(''), 3000)
+          return
+        }
+        throw new Error(data.error || 'Download failed')
+      }
+
+      const blob = await response.blob()
+      const contentDisposition = response.headers.get('content-disposition')
+      let filename = 'download'
+      
+      if (contentDisposition) {
+        const match = contentDisposition.match(/filename\*?=UTF-8''(.+?)(?:;|$)/)
+        if (match) {
+          filename = decodeURIComponent(match[1])
+        }
+      }
+
+      const blobUrl = window.URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = blobUrl
+      link.download = filename
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      window.URL.revokeObjectURL(blobUrl)
+    } catch (err) {
+      setError('Download failed')
+      setTimeout(() => setError(''), 3000)
+    } finally {
+      setDownloadingSelected(false)
+    }
+  }
+
+  const handleFileDownload = async (item: FolderItem) => {
+    if (!token) return
+
+    setDownloadingSelected(true)
+    try {
+      const baseUrl = window.location.origin
+      
+      const response = await fetch(`${baseUrl}/api/share/folder/${token}/download-file`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ file_id: item.id, password: password || undefined })
+      })
+
+      if (!response.ok) {
+        const data = await response.json()
+        if (response.status === 401 && data.requires_password) {
+          setError('Incorrect password')
+          setDownloadingSelected(false)
           setTimeout(() => setError(''), 3000)
           return
         }
@@ -187,7 +282,7 @@ export default function FolderSharePage() {
       }
 
       const contentDisposition = response.headers.get('content-disposition')
-      let filename = 'download'
+      let filename = item.name
       
       if (contentDisposition) {
         const match = contentDisposition.match(/filename\*?=UTF-8''(.+?)(?:;|$)/)
@@ -209,7 +304,7 @@ export default function FolderSharePage() {
       setError('Download failed')
       setTimeout(() => setError(''), 3000)
     } finally {
-      setDownloading(false)
+      setDownloadingSelected(false)
     }
   }
 
@@ -453,18 +548,19 @@ export default function FolderSharePage() {
               </p>
             </div>
             <Button 
-              onClick={() => handleDownload()} 
-              disabled={downloading}
+              onClick={handleDownloadAll} 
+              disabled={downloadingAll || downloadingSelected}
+              isLoading={downloadingAll}
               className="flex items-center gap-2"
             >
-              {downloading ? (
-                <Loader size="sm" />
-              ) : (
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                </svg>
+              {downloadingAll ? 'Downloading...' : (
+                <>
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                  </svg>
+                  Download All
+                </>
               )}
-              Download All
             </Button>
           </div>
           {error && (
@@ -480,17 +576,20 @@ export default function FolderSharePage() {
             </span>
             <div className="flex gap-2">
               <Button 
-                onClick={() => handleDownload()} 
-                disabled={downloading}
+                onClick={handleDownloadSelected} 
+                disabled={downloadingAll || downloadingSelected}
+                isLoading={downloadingSelected}
                 size="sm"
                 className="flex items-center gap-2"
               >
-                {downloading ? <Loader size="sm" /> : (
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                  </svg>
+                {downloadingSelected ? 'Downloading...' : (
+                  <>
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                    </svg>
+                    Download Selected
+                  </>
                 )}
-                Download Selected
               </Button>
               <Button 
                 onClick={() => setSelectedItems(new Set())} 
@@ -552,7 +651,7 @@ export default function FolderSharePage() {
                     </button>
                   ) : (
                     <button 
-                      onClick={() => handleDownload(item)}
+                      onClick={() => handleFileDownload(item)}
                       className="flex items-center gap-3 hover:text-primary-600 dark:hover:text-primary-400"
                     >
                       <FileIcon mimeType={item.mime_type || ''} size="sm" />
