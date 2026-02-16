@@ -65,6 +65,23 @@ model file_shares {
   @@index([created_by], map: "ix_file_shares_created_by")
 }
 
+model folder_shares {
+  id              Int       @id @default(autoincrement())
+  folder_id       Int
+  token           String    @unique(map: "ix_folder_shares_token")
+  expires_at      DateTime?
+  max_downloads  Int?
+  download_count Int       @default(0)
+  password        String?
+  created_by     Int
+  created_at     DateTime  @default(now())
+  folders        folders   @relation(fields: [folder_id], references: [id], onDelete: Cascade)
+  users          users     @relation(fields: [created_by], references: [id], onDelete: Cascade)
+
+  @@index([folder_id], map: "ix_folder_shares_folder_id")
+  @@index([created_by], map: "ix_folder_shares_created_by")
+}
+
 model files {
   id          Int           @id @default(autoincrement())
   name        String
@@ -94,6 +111,7 @@ model folders {
   folders       folders?  @relation("foldersTofolders", fields: [parent_id], references: [id], onDelete: Cascade)
   other_folders folders[] @relation("foldersTofolders")
   storages      storages  @relation(fields: [storage_id], references: [id], onDelete: Cascade)
+  folder_shares folder_shares[]
 
   @@index([parent_id])
   @@index([name], map: "ix_folders_name")
@@ -158,6 +176,7 @@ model users {
   storage_permissions storage_permissions[]
   storages            storages[]
   file_shares         file_shares[]
+  folder_shares       folder_shares[]
 
   @@index([email])
   @@index([username])
