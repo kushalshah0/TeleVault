@@ -5,8 +5,10 @@ import { useParams } from 'next/navigation'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Loader } from '@/components/ModernLoader'
+import { ViewModeToggle } from '@/components/ui'
 import ThemeToggle from '@/components/ThemeToggle'
 import FileIcon from '@/components/ui/FileIcon'
+import FilePreview from '@/components/FilePreview'
 
 interface FolderItem {
   id: number
@@ -33,6 +35,8 @@ export default function FolderSharePage() {
   
   const [folderInfo, setFolderInfo] = useState<FolderInfo | null>(null)
   const [items, setItems] = useState<FolderItem[]>([])
+  const folders = items.filter(item => item.type === 'folder')
+  const files = items.filter(item => item.type === 'file')
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [requiresPassword, setRequiresPassword] = useState(false)
@@ -43,6 +47,9 @@ export default function FolderSharePage() {
   const [theme, setTheme] = useState<'light' | 'dark'>('light')
   const [selectedItems, setSelectedItems] = useState<Set<number>>(new Set())
   const [currentPath, setCurrentPath] = useState('')
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
+  const [lastClickedItem, setLastClickedItem] = useState<{ id: number; timestamp: number } | null>(null)
+  const [previewFile, setPreviewFile] = useState<FolderItem | null>(null)
 
   useEffect(() => {
     if (!token || String(token).trim() === '') {
@@ -257,10 +264,12 @@ export default function FolderSharePage() {
     }
   }
 
-  const handleFileDownload = async (item: FolderItem) => {
-    if (!token) return
+  const handleFileDownload = async (item: FolderItem, asBlob?: boolean): Promise<Blob | undefined> => {
+    if (!token) return undefined
 
-    setDownloadingSelected(true)
+    if (!asBlob) {
+      setDownloadingSelected(true)
+    }
     try {
       const baseUrl = window.location.origin
       
@@ -273,12 +282,20 @@ export default function FolderSharePage() {
       if (!response.ok) {
         const data = await response.json()
         if (response.status === 401 && data.requires_password) {
-          setError('Incorrect password')
-          setDownloadingSelected(false)
-          setTimeout(() => setError(''), 3000)
-          return
+          if (!asBlob) {
+            setError('Incorrect password')
+            setDownloadingSelected(false)
+            setTimeout(() => setError(''), 3000)
+          }
+          return undefined
         }
         throw new Error(data.error || 'Download failed')
+      }
+
+      const blob = await response.blob()
+      
+      if (asBlob) {
+        return blob
       }
 
       const contentDisposition = response.headers.get('content-disposition')
@@ -291,7 +308,6 @@ export default function FolderSharePage() {
         }
       }
 
-      const blob = await response.blob()
       const blobUrl = window.URL.createObjectURL(blob)
       const link = document.createElement('a')
       link.href = blobUrl
@@ -301,10 +317,52 @@ export default function FolderSharePage() {
       document.body.removeChild(link)
       window.URL.revokeObjectURL(blobUrl)
     } catch (err) {
-      setError('Download failed')
-      setTimeout(() => setError(''), 3000)
+      if (!asBlob) {
+        setError('Download failed')
+        setTimeout(() => setError(''), 3000)
+      }
+      return undefined
     } finally {
-      setDownloadingSelected(false)
+      if (!asBlob) {
+        setDownloadingSelected(false)
+      }
+    }
+  }
+
+  const handleItemClick = (item: FolderItem, e: React.MouseEvent) => {
+    const now = Date.now()
+    const DOUBLE_CLICK_DELAY = 400
+    const isCtrlPressed = e.ctrlKey || e.metaKey
+    
+    if (lastClickedItem && lastClickedItem.id === item.id && (now - lastClickedItem.timestamp) < DOUBLE_CLICK_DELAY) {
+      // Double click - open folder or download file
+      if (item.type === 'folder') {
+        handleNavigate(item.name)
+      } else {
+        handleFileDownload(item)
+      }
+      setLastClickedItem(null)
+    } else {
+      // Single click - select item
+      setLastClickedItem({ id: item.id, timestamp: now })
+      if (isCtrlPressed) {
+        // Ctrl+Click - toggle selection
+        toggleSelect(item.id)
+      } else {
+        // Without Ctrl - clear selection and select only this item
+        if (selectedItems.has(item.id)) {
+          setSelectedItems(new Set())
+        } else {
+          setSelectedItems(new Set([item.id]))
+        }
+      }
+    }
+  }
+
+  const handleOpenClick = (item: FolderItem, e: React.MouseEvent) => {
+    e.stopPropagation()
+    if (item.type === 'folder') {
+      handleNavigate(item.name)
     }
   }
 
@@ -544,24 +602,10 @@ export default function FolderSharePage() {
             <div>
               <h2 className="text-xl font-bold text-gray-900 dark:text-white">{folderInfo?.name}</h2>
               <p className="text-sm text-gray-500 dark:text-gray-400">
-                {items.length} items • Created by {folderInfo?.created_by} • {formatDate(folderInfo?.created_at)}
+                Shared by {folderInfo?.created_by} • {formatDate(folderInfo?.created_at)}
               </p>
             </div>
-            <Button 
-              onClick={handleDownloadAll} 
-              disabled={downloadingAll || downloadingSelected}
-              isLoading={downloadingAll}
-              className="flex items-center gap-2"
-            >
-              {downloadingAll ? 'Downloading...' : (
-                <>
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                  </svg>
-                  Download All
-                </>
-              )}
-            </Button>
+            <ViewModeToggle viewMode={viewMode} onChange={setViewMode} />
           </div>
           {error && (
             <p className="mt-2 text-sm text-red-500">{error}</p>
@@ -570,51 +614,93 @@ export default function FolderSharePage() {
 
         {/* Selection Bar */}
         {selectedItems.size > 0 && (
-          <div className="bg-primary-50 dark:bg-primary-900/20 border border-primary-200 dark:border-primary-800 rounded-lg p-3 mb-4 flex items-center justify-between">
-            <span className="text-sm text-primary-700 dark:text-primary-300">
-              {selectedItems.size} item{selectedItems.size > 1 ? 's' : ''} selected
-            </span>
-            <div className="flex gap-2">
-              <Button 
-                onClick={handleDownloadSelected} 
-                disabled={downloadingAll || downloadingSelected}
-                isLoading={downloadingSelected}
-                size="sm"
-                className="flex items-center gap-2"
-              >
-                {downloadingSelected ? 'Downloading...' : (
-                  <>
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+          <div className="selection-bar flex items-center justify-between bg-primary-50 dark:bg-primary-900/20 
+            border border-primary-200 dark:border-primary-800 rounded-lg px-4 py-3 mb-4">
+            <div className="flex items-center gap-4 min-w-0 flex-1">
+              <span className="text-sm font-medium text-primary-900 dark:text-primary-100 whitespace-nowrap">
+                {selectedItems.size} selected
+              </span>
+              <div className="flex items-center gap-2">
+                {/* Open Folder Button - Only when single folder is selected */}
+                {selectedItems.size === 1 && Array.from(selectedItems).every(id => items.find(i => i.id === id)?.type === 'folder') && (
+                  <button
+                    onClick={() => {
+                      const folderId = Array.from(selectedItems)[0]
+                      const folder = items.find(i => i.id === folderId)
+                      if (folder) handleNavigate(folder.name)
+                    }}
+                    className="p-2 hover:bg-primary-100 dark:hover:bg-primary-800 rounded-lg 
+                      transition-colors text-gray-700 dark:text-gray-300 flex-shrink-0"
+                    title="Open folder"
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                        d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
                     </svg>
-                    Download Selected
-                  </>
+                  </button>
                 )}
-              </Button>
-              <Button 
-                onClick={() => setSelectedItems(new Set())} 
-                variant="outline"
-                size="sm"
-              >
-                Clear Selection
-              </Button>
+                {/* Preview Button - Only for single file */}
+                {selectedItems.size === 1 && Array.from(selectedItems).every(id => items.find(i => i.id === id)?.type === 'file') && (
+                  <button
+                    onClick={() => {
+                      const fileId = Array.from(selectedItems)[0]
+                      const file = items.find(i => i.id === fileId)
+                      if (file) setPreviewFile(file)
+                    }}
+                    className="p-2 hover:bg-primary-100 dark:hover:bg-primary-800 rounded-lg 
+                      transition-colors text-gray-700 dark:text-gray-300 flex-shrink-0"
+                    title="Preview file"
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                        d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                        d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                    </svg>
+                  </button>
+                )}
+                {/* Download Button - For selected items */}
+                <button
+                  onClick={handleDownloadSelected}
+                  disabled={downloadingSelected}
+                  className="p-2 hover:bg-primary-100 dark:hover:bg-primary-800 rounded-lg 
+                    transition-colors text-gray-700 dark:text-gray-300 disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0"
+                  title={`Download ${selectedItems.size} item(s)`}
+                >
+                  {downloadingSelected ? (
+                    <svg className="w-5 h-5 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                        d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                    </svg>
+                  ) : (
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                        d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                    </svg>
+                  )}
+                </button>
+                <button
+                  onClick={() => setSelectedItems(new Set())}
+                  className="p-2 hover:bg-primary-100 dark:hover:bg-primary-800 rounded-lg 
+                    transition-colors text-gray-700 dark:text-gray-300 flex-shrink-0"
+                  title="Clear selection"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
             </div>
           </div>
         )}
 
         {/* File List */}
         <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
-          {/* Header */}
-          <div className="grid grid-cols-12 gap-4 px-4 py-3 bg-gray-50 dark:bg-gray-800/50 border-b border-gray-200 dark:border-gray-700 text-sm font-medium text-gray-500 dark:text-gray-400">
-            <div className="col-span-1">
-              <input
-                type="checkbox"
-                checked={selectedItems.size === items.length && items.length > 0}
-                onChange={selectAll}
-                className="w-4 h-4 rounded border-gray-300"
-              />
-            </div>
-            <div className="col-span-5">Name</div>
+          {viewMode === 'list' ? (
+          <>
+          {/* Header - Hidden on mobile */}
+          <div className="hidden sm:grid sm:grid-cols-12 sm:gap-4 sm:px-6 sm:py-3 bg-gray-50 dark:bg-gray-800/50 border-b border-gray-200 dark:border-gray-700 text-sm font-medium text-gray-500 dark:text-gray-400">
+            <div className="col-span-6">Name</div>
             <div className="col-span-2">Size</div>
             <div className="col-span-4">Modified</div>
           </div>
@@ -625,50 +711,136 @@ export default function FolderSharePage() {
               <p className="text-gray-500 dark:text-gray-400">This folder is empty</p>
             </div>
           ) : (
-            items.map((item) => (
-              <div 
-                key={item.id}
-                className="grid grid-cols-12 gap-4 px-4 py-3 border-b border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50 items-center"
-              >
-                <div className="col-span-1">
-                  <input
-                    type="checkbox"
-                    checked={selectedItems.has(item.id)}
-                    onChange={() => toggleSelect(item.id)}
-                    className="w-4 h-4 rounded border-gray-300"
-                  />
+            <>
+              {/* Folders */}
+              {folders.map((item) => (
+                <div 
+                  key={item.id}
+                  onClick={(e) => handleItemClick(item, e)}
+                  className={`px-3 sm:px-6 py-2 sm:py-3 border-b border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50 cursor-pointer ${
+                    selectedItems.has(item.id) ? 'bg-primary-50 dark:bg-primary-900/20' : ''
+                  }`}
+                >
+                  {/* Mobile Layout */}
+                  <div className="flex items-center gap-2 sm:hidden">
+                    <svg className="w-5 h-5 text-yellow-500 flex-shrink-0" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M10 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z"/>
+                    </svg>
+                    <div className="flex-1 min-w-0">
+                      <div className="font-medium text-sm text-gray-900 dark:text-gray-100 truncate">{item.name}</div>
+                      <div className="text-xs text-gray-500 dark:text-gray-400">Folder</div>
+                    </div>
+                  </div>
+                  {/* Desktop Layout */}
+                  <div className="hidden sm:grid sm:grid-cols-12 sm:gap-4 sm:items-center">
+                    <div className="col-span-6 flex items-center gap-3">
+                      <button 
+                        onClick={(e) => handleOpenClick(item, e)}
+                        className="flex items-center gap-3 hover:text-primary-600 dark:hover:text-primary-400"
+                      >
+                        <svg className="w-5 h-5 text-yellow-500" fill="currentColor" viewBox="0 0 24 24">
+                          <path d="M10 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z"/>
+                        </svg>
+                        <span className="font-medium text-gray-900 dark:text-gray-100">{item.name}</span>
+                      </button>
+                    </div>
+                    <div className="col-span-2 text-sm text-gray-500 dark:text-gray-400">--</div>
+                    <div className="col-span-4 text-sm text-gray-500 dark:text-gray-400">{formatDate(item.modified_at)}</div>
+                  </div>
                 </div>
-                <div className="col-span-5 flex items-center gap-3">
-                  {item.type === 'folder' ? (
-                    <button 
-                      onClick={() => handleNavigate(item.name)}
-                      className="flex items-center gap-3 hover:text-primary-600 dark:hover:text-primary-400"
-                    >
-                      <svg className="w-5 h-5 text-yellow-500" fill="currentColor" viewBox="0 0 24 24">
-                        <path d="M10 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z"/>
-                      </svg>
-                      <span className="font-medium text-gray-900 dark:text-gray-100">{item.name}</span>
-                    </button>
-                  ) : (
-                    <button 
-                      onClick={() => handleFileDownload(item)}
-                      className="flex items-center gap-3 hover:text-primary-600 dark:hover:text-primary-400"
-                    >
+              ))}
+
+              {/* Files */}
+              {files.map((item) => (
+                <div 
+                  key={item.id}
+                  onClick={(e) => handleItemClick(item, e)}
+                  className={`px-3 sm:px-6 py-2 sm:py-3 border-b border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50 cursor-pointer ${
+                    selectedItems.has(item.id) ? 'bg-primary-50 dark:bg-primary-900/20' : ''
+                  }`}
+                >
+                  {/* Mobile Layout */}
+                  <div className="flex items-center gap-2 sm:hidden">
+                    <FileIcon mimeType={item.mime_type || ''} size="sm" className="flex-shrink-0" />
+                    <div className="flex-1 min-w-0">
+                      <div className="font-medium text-sm text-gray-900 dark:text-gray-100 truncate">{item.name}</div>
+                      <div className="text-xs text-gray-500 dark:text-gray-400">{formatSize(item.size)}</div>
+                    </div>
+                  </div>
+                  {/* Desktop Layout */}
+                  <div className="hidden sm:grid sm:grid-cols-12 sm:gap-4 sm:items-center">
+                    <div className="col-span-6 flex items-center gap-3">
                       <FileIcon mimeType={item.mime_type || ''} size="sm" />
-                      <span className="font-medium text-gray-900 dark:text-gray-100">{item.name}</span>
-                    </button>
-                  )}
+                      <span className="font-medium text-gray-900 dark:text-gray-100 truncate">{item.name}</span>
+                    </div>
+                    <div className="col-span-2 text-sm text-gray-500 dark:text-gray-400">{formatSize(item.size)}</div>
+                    <div className="col-span-4 text-sm text-gray-500 dark:text-gray-400">{formatDate(item.modified_at)}</div>
+                  </div>
                 </div>
-                <div className="col-span-2 text-sm text-gray-500 dark:text-gray-400">
-                  {item.type === 'file' ? formatSize(item.size) : '--'}
+              ))}
+            </>
+          )}
+          </>
+          ) : (
+            /* Grid View */
+            <>
+          {items.length === 0 ? (
+            <div className="text-center py-12">
+              <p className="text-gray-500 dark:text-gray-400">This folder is empty</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 sm:gap-4 p-4" style={{ overflow: 'visible' }}>
+              {folders.map((item) => (
+                <div
+                  key={item.id}
+                  onClick={(e) => handleItemClick(item, e)}
+                  className={`group relative flex flex-col items-center p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700/50 cursor-pointer transition-all ${
+                    selectedItems.has(item.id) ? 'bg-primary-50 dark:bg-primary-900/20 ring-2 ring-primary-500' : ''
+                  }`}
+                >
+                  <div className="flex flex-col items-center gap-2 mt-2">
+                    <svg className="w-12 h-12 text-yellow-500" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M10 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z"/>
+                    </svg>
+                    <span className="text-sm font-medium text-gray-900 dark:text-gray-100 text-center line-clamp-2">{item.name}</span>
+                  </div>
                 </div>
-                <div className="col-span-4 text-sm text-gray-500 dark:text-gray-400">
-                  {formatDate(item.modified_at)}
+              ))}
+
+              {files.map((item) => (
+                <div
+                  key={item.id}
+                  onClick={(e) => handleItemClick(item, e)}
+                  className={`group relative flex flex-col items-center p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700/50 cursor-pointer transition-all ${
+                    selectedItems.has(item.id) ? 'bg-primary-50 dark:bg-primary-900/20 ring-2 ring-primary-500' : ''
+                  }`}
+                >
+                  <div className="flex flex-col items-center gap-2 mt-2">
+                    <FileIcon mimeType={item.mime_type || ''} size="lg" />
+                    <span className="text-sm font-medium text-gray-900 dark:text-gray-100 text-center line-clamp-2">{item.name}</span>
+                    <span className="text-xs text-gray-500 dark:text-gray-400">{formatSize(item.size)}</span>
+                  </div>
                 </div>
-              </div>
-            ))
+              ))}
+            </div>
+          )}
+            </>
           )}
         </div>
+
+      {/* File Preview Modal */}
+      {previewFile && (
+        <FilePreview
+          file={{
+            id: previewFile.id,
+            name: previewFile.name,
+            size: previewFile.size || 0,
+            mime_type: previewFile.mime_type
+          }}
+          onClose={() => setPreviewFile(null)}
+          onDownload={handleFileDownload as (file: any, asBlob?: boolean) => Promise<Blob | undefined>}
+        />
+      )}
       </main>
     </div>
   )

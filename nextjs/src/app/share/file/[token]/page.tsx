@@ -56,7 +56,7 @@ export default function SharePage() {
   const fetchFileInfo = async () => {
     try {
       const baseUrl = window.location.origin
-      const response = await fetch(`${baseUrl}/api/share/${token}?action=info`)
+      const response = await fetch(`${baseUrl}/api/share/file/${token}?action=info`)
       const data = await response.json()
 
       if (!response.ok) {
@@ -86,7 +86,7 @@ export default function SharePage() {
 
     try {
       const baseUrl = window.location.origin
-      const response = await fetch(`${baseUrl}/api/share/${token}`, {
+      const response = await fetch(`${baseUrl}/api/share/file/${token}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: password ? JSON.stringify({ password }) : JSON.stringify({})

@@ -78,7 +78,7 @@ export async function POST(
       })
 
       return NextResponse.json({
-        share_url: `${baseUrl}/share/${updatedShare.token}`,
+        share_url: `${baseUrl}/share/file/${updatedShare.token}`,
         expires_at: updatedShare.expires_at,
         max_downloads: updatedShare.max_downloads,
         created_at: updatedShare.created_at,
@@ -104,7 +104,7 @@ export async function POST(
     })
 
     return NextResponse.json({
-      share_url: `${baseUrl}/share/${token}`,
+      share_url: `${baseUrl}/share/file/${token}`,
       expires_at: expires_at,
       max_downloads,
       created_at: fileShare.created_at,
@@ -166,7 +166,7 @@ export async function GET(
     
     return NextResponse.json({
       id: share.id,
-      share_url: `${baseUrl}/share/${share.token}`,
+      share_url: `${baseUrl}/share/file/${share.token}`,
       expires_at: share.expires_at,
       max_downloads: share.max_downloads,
       download_count: share.download_count,
