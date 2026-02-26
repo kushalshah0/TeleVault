@@ -276,6 +276,7 @@ function Dashboard({ onStorageCreated, storages: initialStorages = [], onRefresh
         isOpen={showCreateModal}
         onClose={() => setShowCreateModal(false)}
         title="Create New Storage"
+        size="lg"
       >
         <form onSubmit={handleCreateStorage} className="space-y-6">
           <Input
@@ -295,6 +296,36 @@ function Dashboard({ onStorageCreated, storages: initialStorages = [], onRefresh
             required
             helperText="The numeric ID of your Telegram channel (must start with -100)"
           />
+
+          <details className="group text-sm">
+            <summary className="cursor-pointer text-muted-foreground hover:text-foreground flex items-center gap-2">
+              <svg className="w-4 h-4 transition-transform group-open:rotate-90" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
+              How to set up Telegram channel
+            </summary>
+            <div className="mt-3 space-y-3 text-muted-foreground bg-muted/50 rounded-lg p-4 text-xs">
+              <div>
+                <p className="font-medium text-foreground mb-1">1. Create a Telegram channel</p>
+                <p>Open Telegram → New Channel → Name it → Create. Make it public or private.</p>
+              </div>
+              <div>
+                <p className="font-medium text-foreground mb-1">2. Add our bots to channel</p>
+                <p>Add these bots as administrators to your channel:</p>
+                <ul className="list-disc list-inside mt-1 space-y-0.5">
+                  <li>@televault_storage_bot</li>
+                  <li>@televault1_storage_bot</li>
+                  <li>@televault2_storage_bot</li>
+                  <li>@televault3_storage_bot</li>
+                  <li>@televault4_storage_bot</li>
+                </ul>
+              </div>
+              <div>
+                <p className="font-medium text-foreground mb-1">3. Get Channel ID</p>
+                <p>Forward a message from channel to @username_to_id_bot → Copy the -100xxxxx ID.</p>
+              </div>
+            </div>
+          </details>
 
           <div className="flex justify-end gap-3">
             <Button 
