@@ -38,7 +38,6 @@ const UploadProgress = React.memo(({
 
   return (
     <div className="fixed bottom-4 right-4 z-50 w-80 sm:w-96 shadow-2xl">
-      {/* Google Drive Style Upload Panel */}
       <div className="bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
         {/* Header */}
         <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
@@ -75,13 +74,11 @@ const UploadProgress = React.memo(({
         {/* Content - Collapsible */}
         {!isMinimized && (
           <div className="p-4 space-y-3 max-h-96 overflow-y-auto custom-scrollbar">
-            {/* All Files Upload */}
             {uploadingFiles.map((file) => (
               <div key={file.id} className="flex items-start gap-3 pb-3 border-b border-gray-100 dark:border-gray-800 last:border-0 last:pb-0">
                 {/* Circular Progress */}
                 <div className="relative flex-shrink-0">
                   <svg className="w-10 h-10 transform -rotate-90">
-                    {/* Background circle */}
                     <circle
                       cx="20"
                       cy="20"
@@ -91,7 +88,6 @@ const UploadProgress = React.memo(({
                       fill="none"
                       className="text-gray-200 dark:text-gray-700"
                     />
-                    {/* Progress circle */}
                     <circle
                       cx="20"
                       cy="20"
@@ -101,7 +97,7 @@ const UploadProgress = React.memo(({
                       fill="none"
                       strokeDasharray={`${2 * Math.PI * 16}`}
                       strokeDashoffset={`${2 * Math.PI * 16 * (1 - file.progress / 100)}`}
-                      className={`transition-all duration-300 ${
+                      className={`transition-all duration-300 ease-out ${
                         file.status === 'completed' ? 'text-green-600 dark:text-green-400' :
                         file.status === 'error' ? 'text-red-600 dark:text-red-400' :
                         file.status === 'uploading' ? 'text-primary-600 dark:text-primary-400' :
@@ -110,7 +106,6 @@ const UploadProgress = React.memo(({
                       strokeLinecap="round"
                     />
                   </svg>
-                  {/* Icon/Status in center */}
                   <div className="absolute inset-0 flex items-center justify-center">
                     {file.status === 'completed' ? (
                       <svg className="w-5 h-5 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -149,18 +144,20 @@ const UploadProgress = React.memo(({
                       {formatFileSize(file.size)}
                     </p>
                     {file.status === 'uploading' && (
-                      <span className="text-xs text-primary-600 dark:text-primary-400">
-                        {file.progress}%
+                      <span className="text-xs font-mono text-primary-600 dark:text-primary-400 tabular-nums">
+                        {file.progress.toFixed(1)}%
                       </span>
                     )}
                   </div>
                   
-                  {/* Progress bar - only show for uploading files */}
                   {file.status === 'uploading' && (
-                    <div className="mt-2 w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1">
+                    <div className="mt-2 w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1 overflow-hidden">
                       <div 
-                        className="bg-primary-600 dark:bg-primary-500 h-1 rounded-full transition-all duration-300"
-                        style={{ width: `${file.progress}%` }}
+                        className="bg-primary-600 dark:bg-primary-500 h-1 rounded-full"
+                        style={{ 
+                          width: `${file.progress}%`,
+                          transition: 'width 300ms ease-out'
+                        }}
                       />
                     </div>
                   )}
