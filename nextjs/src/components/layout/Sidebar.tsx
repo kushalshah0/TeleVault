@@ -43,28 +43,20 @@ interface NavItemProps {
 
 function NavItem({ icon, label, active, collapsed, onClick }: NavItemProps) {
   return (
-    <div className="relative group">
-      <button
-        onClick={onClick}
-        className={`w-full flex items-center gap-3 px-2 py-2.5 rounded-lg transition-all font-medium
-          ${active
-            ? 'bg-primary text-primary-foreground shadow-sm'
-            : 'text-foreground hover:bg-accent'
-          }
-          ${collapsed ? 'lg:justify-center lg:px-0' : ''}
-        `}
-      >
-        <span className="w-5 h-5 flex-shrink-0">{icon}</span>
-        <span className={`truncate lg:block hidden ${collapsed ? 'lg:hidden' : ''}`}>{label}</span>
-        <span className="lg:hidden block truncate">{label}</span>
-      </button>
-      {/* Tooltip - desktop only, shows on hover when collapsed */}
-      <div className="hidden lg:block absolute left-full top-1/2 -translate-y-1/2 ml-2 px-2 py-1 bg-popover 
-        text-popover-foreground text-xs rounded-md shadow-lg border border-border 
-        opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity whitespace-nowrap z-50">
-        {label}
-      </div>
-    </div>
+    <button
+      onClick={onClick}
+      className={`w-full flex items-center gap-3 px-2 py-2.5 rounded-lg transition-all font-medium
+        ${active
+          ? 'bg-primary text-primary-foreground shadow-sm'
+          : 'text-foreground hover:bg-accent'
+        }
+        ${collapsed ? 'lg:justify-center lg:px-0' : ''}
+      `}
+    >
+      <span className="w-5 h-5 flex-shrink-0">{icon}</span>
+      <span className={`truncate lg:block hidden ${collapsed ? 'lg:hidden' : ''}`}>{label}</span>
+      <span className="lg:hidden block truncate">{label}</span>
+    </button>
   )
 }
 
@@ -139,7 +131,7 @@ function Sidebar({ storages = [], currentStorage, onStorageChange, usage, isOpen
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 p-2 space-y-1 overflow-y-auto scrollbar-thin">
+        <nav className="flex-1 p-2 space-y-1 overflow-y-auto">
           <NavItem
             icon={<Database className="w-5 h-5" />}
             label="All Storages"
@@ -198,64 +190,28 @@ function Sidebar({ storages = [], currentStorage, onStorageChange, usage, isOpen
           {storages.length > 0 && (
             <div className="space-y-1">
               {storages.map((storage) => (
-                <div key={storage.id} className="relative group">
-                  <button
-                    onClick={() => handleNavigation(() => {
-                      router.push(`/storage/${storage.id}`)
-                      onStorageChange?.(storage)
-                    })}
-                    className={`w-full flex items-center gap-3 px-2 py-2.5 rounded-lg transition-all font-medium
-                      ${currentStorage?.id === storage.id
-                        ? 'bg-primary text-primary-foreground shadow-sm'
-                        : 'text-foreground hover:bg-accent'
-                      }
-                      ${collapsed ? 'lg:justify-center lg:px-0' : ''}
-                    `}
-                  >
-                    <Folder className="w-5 h-5 flex-shrink-0" />
-                    <span className={`truncate lg:block hidden ${collapsed ? 'lg:hidden' : ''}`}>{storage.name}</span>
-                    <span className="lg:hidden block truncate">{storage.name}</span>
-                  </button>
-                  <div className="hidden lg:block absolute left-full top-1/2 -translate-y-1/2 ml-2 px-2 py-1 bg-popover 
-                    text-popover-foreground text-xs rounded-md shadow-lg border border-border 
-                    opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity whitespace-nowrap z-50">
-                    {storage.name}
-                  </div>
-                </div>
+                <button
+                  key={storage.id}
+                  onClick={() => handleNavigation(() => {
+                    router.push(`/storage/${storage.id}`)
+                    onStorageChange?.(storage)
+                  })}
+                  className={`w-full flex items-center gap-3 px-2 py-2.5 rounded-lg transition-all font-medium
+                    ${currentStorage?.id === storage.id
+                      ? 'bg-primary text-primary-foreground shadow-sm'
+                      : 'text-foreground hover:bg-accent'
+                    }
+                    ${collapsed ? 'lg:justify-center lg:px-0' : ''}
+                  `}
+                >
+                  <Folder className="w-5 h-5 flex-shrink-0" />
+                  <span className={`truncate lg:block hidden ${collapsed ? 'lg:hidden' : ''}`}>{storage.name}</span>
+                  <span className="lg:hidden block truncate">{storage.name}</span>
+                </button>
               ))}
             </div>
           )}
         </nav>
-
-        {/* Usage Footer */}
-        {usage && !collapsed && (
-          <div className="p-4 border-t border-border hidden lg:block">
-            <p className="text-xs font-medium text-muted-foreground mb-2">Storage Used</p>
-            <div className="w-full bg-accent rounded-full h-1.5 mb-1">
-              <div
-                className="bg-primary h-1.5 rounded-full transition-all duration-300"
-                style={{ width: `${Math.min((usage.used_bytes / (10 * 1024 * 1024 * 1024)) * 100, 100)}%` }}
-              />
-            </div>
-            <p className="text-xs text-muted-foreground">
-              {formatFileSize(usage.used_bytes)} / 10 GB
-            </p>
-          </div>
-        )}
-        {usage && (
-          <div className="p-4 border-t border-border lg:hidden">
-            <p className="text-xs font-medium text-muted-foreground mb-2">Storage Used</p>
-            <div className="w-full bg-accent rounded-full h-1.5 mb-1">
-              <div
-                className="bg-primary h-1.5 rounded-full transition-all duration-300"
-                style={{ width: `${Math.min((usage.used_bytes / (10 * 1024 * 1024 * 1024)) * 100, 100)}%` }}
-              />
-            </div>
-            <p className="text-xs text-muted-foreground">
-              {formatFileSize(usage.used_bytes)} / 10 GB
-            </p>
-          </div>
-        )}
       </aside>
     </>
   )

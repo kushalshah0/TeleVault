@@ -263,3 +263,12 @@
   background-color: hsl(var(--selection-bg));
   color: hsl(var(--foreground));
 }
+
+/* Hide scrollbar for sidebar */
+.sidebar-no-scroll {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.sidebar-no-scroll::-webkit-scrollbar {
+  display: none;
+}
