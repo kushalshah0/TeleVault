@@ -888,14 +888,22 @@ function StorageView({ onFileOperation, searchQuery, searchTrigger, onClearSearc
     return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
   };
 
-  const formatDate = (dateString: string) => {
+  const formatDate = (dateString: string | Date | undefined | null) => {
     if (!dateString) return '-';
     const date = new Date(dateString);
     if (isNaN(date.getTime())) return '-';
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+    
+    if (diffDays === 0) return 'Today';
+    if (diffDays === 1) return 'Yesterday';
+    if (diffDays < 7) return `${diffDays} days ago`;
+    
     return date.toLocaleDateString('en-US', {
       month: 'short',
       day: 'numeric',
-      year: 'numeric',
+      year: date.getFullYear() !== now.getFullYear() ? 'numeric' : undefined,
     });
   };
 
@@ -1470,12 +1478,11 @@ function StorageView({ onFileOperation, searchQuery, searchTrigger, onClearSearc
       ) : (
         <Card className="p-0 overflow-hidden">
           {/* Table Header */}
-          <div className="hidden sm:grid sm:grid-cols-12 sm:gap-4 sm:px-4 sm:py-2.5 bg-muted/50 
+          <div className="hidden sm:grid sm:grid-cols-10 sm:gap-4 sm:px-4 sm:py-2.5 bg-muted/50 
             text-xs font-medium text-muted-foreground uppercase tracking-wider border-b border-border">
             <div className="col-span-6 pl-10">Name</div>
             <div className="col-span-2">Size</div>
             <div className="col-span-2">Modified</div>
-            <div className="col-span-2">Type</div>
           </div>
 
           <div className="divide-y divide-border">
@@ -1484,7 +1491,7 @@ function StorageView({ onFileOperation, searchQuery, searchTrigger, onClearSearc
               <div
                 key={`folder-${folder.id}`}
                 data-card
-                className={`group grid grid-cols-1 sm:grid-cols-12 sm:gap-4 px-3 sm:px-4 py-2.5 
+                className={`group grid grid-cols-1 sm:grid-cols-10 sm:gap-4 px-3 sm:px-4 py-2.5 
                   hover:bg-muted/50 transition-colors cursor-pointer ${isSelected({ ...folder, type: 'folder' })
                     ? 'bg-primary/5 dark:bg-primary/10'
                     : ''
@@ -1532,7 +1539,6 @@ function StorageView({ onFileOperation, searchQuery, searchTrigger, onClearSearc
                 </div>
                 <div className="hidden sm:flex sm:col-span-2 items-center text-sm text-muted-foreground">—</div>
                 <div className="hidden sm:flex sm:col-span-2 items-center text-sm text-muted-foreground">{formatDate(folder.created_at)}</div>
-                <div className="hidden sm:flex sm:col-span-2 items-center text-sm text-muted-foreground">Folder</div>
               </div>
             ))}
 
@@ -1541,7 +1547,7 @@ function StorageView({ onFileOperation, searchQuery, searchTrigger, onClearSearc
               <div
                 key={`file-${file.id}`}
                 data-card
-                className={`group grid grid-cols-1 sm:grid-cols-12 sm:gap-4 px-3 sm:px-4 py-2.5 
+                className={`group grid grid-cols-1 sm:grid-cols-10 sm:gap-4 px-3 sm:px-4 py-2.5 
                   hover:bg-muted/50 transition-colors cursor-pointer ${isSelected({ ...file, type: 'file' })
                     ? 'bg-primary/5 dark:bg-primary/10'
                     : ''
@@ -1590,7 +1596,6 @@ function StorageView({ onFileOperation, searchQuery, searchTrigger, onClearSearc
                 </div>
                 <div className="hidden sm:flex sm:col-span-2 items-center text-sm text-muted-foreground">{formatFileSize(file.size)}</div>
                 <div className="hidden sm:flex sm:col-span-2 items-center text-sm text-muted-foreground">{formatDate(file.created_at)}</div>
-                <div className="hidden sm:flex sm:col-span-2 items-center text-sm text-muted-foreground truncate">{file.mime_type?.split('/')[1] || 'File'}</div>
               </div>
             ))}
           </div>
