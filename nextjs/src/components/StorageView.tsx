@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef, useCallback, ChangeEvent, DragEvent, FormEvent, MouseEvent } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import toast from 'react-hot-toast';
+import { Eye, Download, Share2, Pencil, Trash2, FolderOpen } from 'lucide-react';
 import { storageAPI, folderAPI, fileAPI } from '@/utils/api-client';
 import { LoadingSkeleton, Spinner, Loader } from './ModernLoader';
 import FilePreview from './FilePreview';
@@ -706,7 +707,7 @@ function StorageView({ onFileOperation, searchQuery, searchTrigger, onClearSearc
       if (canPreviewFile(item)) {
         menuItems.push(
           {
-            icon: '👁️', label: 'Preview', onClick: () => {
+            icon: <Eye className="w-4 h-4" />, label: 'Preview', onClick: () => {
               recentUtils.addRecent(item, storageId, storage?.name || 'Storage');
               setPreviewFile(item);
             }
@@ -714,14 +715,14 @@ function StorageView({ onFileOperation, searchQuery, searchTrigger, onClearSearc
         );
       }
       menuItems.push(
-        { icon: '⬇️', label: 'Download', onClick: () => handleFileDownload(item) },
-        { icon: '🔗', label: 'Share', onClick: () => { setSharingItem({ id: item.id, name: item.name, type: 'file' }); setShowShareModal(true); } }
+        { icon: <Download className="w-4 h-4" />, label: 'Download', onClick: () => handleFileDownload(item) },
+        { icon: <Share2 className="w-4 h-4" />, label: 'Share', onClick: () => { setSharingItem({ id: item.id, name: item.name, type: 'file' }); setShowShareModal(true); } }
       );
 
       // Add Edit option for text files (only for owner, admin, editor)
       if (isTextFile(item) && ['OWNER', 'ADMIN', 'EDITOR'].includes(userRole)) {
         menuItems.push(
-          { icon: '✏️', label: 'Edit', onClick: () => handleEditFile(item) }
+          { icon: <Pencil className="w-4 h-4" />, label: 'Edit', onClick: () => handleEditFile(item) }
         );
       }
 
@@ -729,21 +730,21 @@ function StorageView({ onFileOperation, searchQuery, searchTrigger, onClearSearc
       if (['OWNER', 'ADMIN', 'EDITOR'].includes(userRole)) {
         menuItems.push(
           { divider: true },
-          { icon: '🗑️', label: 'Delete', onClick: () => confirmFileDelete(item.id, item.name), danger: true }
+          { icon: <Trash2 className="w-4 h-4" />, label: 'Delete', onClick: () => confirmFileDelete(item.id, item.name), danger: true }
         );
       }
     } else if (type === 'folder') {
       // Add Rename, Open, and Delete options
       if (['OWNER', 'ADMIN', 'EDITOR'].includes(userRole)) {
         menuItems.push(
-          { icon: '✏️', label: 'Rename', onClick: () => showRenameDialog(item, 'folder') },
-          { icon: '👁️', label: 'Open', onClick: () => handleFolderOpen(item) },
+          { icon: <Pencil className="w-4 h-4" />, label: 'Rename', onClick: () => showRenameDialog(item, 'folder') },
+          { icon: <FolderOpen className="w-4 h-4" />, label: 'Open', onClick: () => handleFolderOpen(item) },
           { divider: true },
-          { icon: '🗑️', label: 'Delete', onClick: () => confirmFolderDelete(item.id, item.name), danger: true }
+          { icon: <Trash2 className="w-4 h-4" />, label: 'Delete', onClick: () => confirmFolderDelete(item.id, item.name), danger: true }
         );
       } else {
         menuItems.push(
-          { icon: '👁️', label: 'Open', onClick: () => handleFolderOpen(item) }
+          { icon: <FolderOpen className="w-4 h-4" />, label: 'Open', onClick: () => handleFolderOpen(item) }
         );
       }
     }
