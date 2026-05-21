@@ -14,6 +14,7 @@ interface ConfirmDialogProps {
   cancelText?: string
   variant?: 'destructive' | 'primary'
   isLoading?: boolean
+  highlightText?: string
 }
 
 export function ConfirmDialog({
@@ -26,11 +27,22 @@ export function ConfirmDialog({
   cancelText = 'Cancel',
   variant = 'primary',
   isLoading = false,
+  highlightText,
 }: ConfirmDialogProps) {
   return (
     <Modal isOpen={isOpen} onClose={onClose} size="sm" title={title}>
       <div className="space-y-4">
-        <p className="text-sm text-muted-foreground">{message}</p>
+        <p className="text-sm text-muted-foreground break-words">
+          {highlightText ? (
+            <>
+              {message.split(highlightText)[0]}
+              <span className="font-medium text-foreground break-all">{highlightText}</span>
+              {message.split(highlightText)[1]}
+            </>
+          ) : (
+            message
+          )}
+        </p>
         
         <div className="flex gap-3 justify-end">
           <Button

@@ -1746,6 +1746,7 @@ function StorageView({ onFileOperation, searchQuery, searchTrigger, onClearSearc
             ? `Are you sure you want to delete "${deleteItem?.name}" and all its contents? This action cannot be undone.`
             : `Are you sure you want to delete "${deleteItem?.name}"? This action cannot be undone.`
         }
+        highlightText={deleteItem?.name}
         confirmText="Delete"
         cancelText="Cancel"
         variant="destructive"
