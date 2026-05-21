@@ -1468,79 +1468,71 @@ function StorageView({ onFileOperation, searchQuery, searchTrigger, onClearSearc
           ))}
         </div>
       ) : (
-        <Card>
-          <div className="divide-y divide-gray-200 dark:divide-gray-700">
-            {/* Table Header - Hidden on mobile, shown on larger screens */}
-            <div className="hidden sm:grid sm:grid-cols-10 sm:gap-4 sm:px-6 sm:py-3 bg-gray-50 dark:bg-gray-800/50 
-              text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-              <div className="col-span-6">Name</div>
-              <div className="col-span-2">Size</div>
-              <div className="col-span-2">Modified</div>
-            </div>
+        <Card className="p-0 overflow-hidden">
+          {/* Table Header */}
+          <div className="hidden sm:grid sm:grid-cols-12 sm:gap-4 sm:px-4 sm:py-2.5 bg-muted/50 
+            text-xs font-medium text-muted-foreground uppercase tracking-wider border-b border-border">
+            <div className="col-span-6 pl-10">Name</div>
+            <div className="col-span-2">Size</div>
+            <div className="col-span-2">Modified</div>
+            <div className="col-span-2">Type</div>
+          </div>
 
+          <div className="divide-y divide-border">
             {/* Folders */}
             {displayFolders.map((folder) => (
               <div
                 key={`folder-${folder.id}`}
                 data-card
-                className={`group sm:grid sm:grid-cols-10 sm:gap-4 px-3 sm:px-6 py-2 sm:py-3 hover:bg-gray-50 
-                  dark:hover:bg-gray-800/50 transition-colors cursor-pointer ${isSelected({ ...folder, type: 'folder' })
-                    ? 'bg-primary-50 dark:bg-primary-900/20'
+                className={`group grid grid-cols-1 sm:grid-cols-12 sm:gap-4 px-3 sm:px-4 py-2.5 
+                  hover:bg-muted/50 transition-colors cursor-pointer ${isSelected({ ...folder, type: 'folder' })
+                    ? 'bg-primary/5 dark:bg-primary/10'
                     : ''
                   }`}
                 onClick={(e) => handleItemClick(folder, 'folder', e)}
                 onContextMenu={(e) => handleContextMenu(e, folder, 'folder')}
               >
-                {/* Mobile Layout - Stack vertically */}
-                <div className="sm:hidden flex items-center gap-2">
+                {/* Mobile */}
+                <div className="sm:hidden flex items-center gap-3">
                   <button
                     onClick={(e) => { e.stopPropagation(); toggleSelection({ ...folder, type: 'folder' }); }}
-                    className="flex-shrink-0 p-0.5"
+                    className="flex-shrink-0"
                     aria-label="Select folder"
                   >
                     {isSelected({ ...folder, type: 'folder' }) ? (
-                      <CheckSquare className="w-4 h-4 text-primary-600 dark:text-primary-400" />
+                      <CheckSquare className="w-4 h-4 text-primary" />
                     ) : (
                       <Square className="w-4 h-4 text-muted-foreground" />
                     )}
                   </button>
                   <FileIcon type="folder" size="md" className="flex-shrink-0" />
                   <div className="flex-1 min-w-0">
-                    <div className="font-medium text-sm text-gray-900 dark:text-gray-100 truncate">
-                      {folder.name}
-                    </div>
-                    <div className="text-xs text-gray-500 dark:text-gray-400">
-                      Folder • {formatDate(folder.created_at)}
-                    </div>
+                    <div className="font-medium text-sm text-foreground truncate">{folder.name}</div>
+                    <div className="text-xs text-muted-foreground">Folder • {formatDate(folder.created_at)}</div>
                   </div>
                 </div>
 
-                {/* Desktop Layout - Grid */}
+                {/* Desktop */}
                 <div className="hidden sm:flex sm:col-span-6 items-center gap-3 min-w-0">
                   <button
                     onClick={(e) => { e.stopPropagation(); toggleSelection({ ...folder, type: 'folder' }); }}
-                    className="flex-shrink-0 p-0.5 opacity-0 group-hover:opacity-100 transition-opacity
+                    className="flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity
                       data-[selected=true]:opacity-100"
                     data-selected={isSelected({ ...folder, type: 'folder' })}
                     aria-label="Select folder"
                   >
                     {isSelected({ ...folder, type: 'folder' }) ? (
-                      <CheckSquare className="w-4 h-4 text-primary-600 dark:text-primary-400" />
+                      <CheckSquare className="w-4 h-4 text-primary" />
                     ) : (
                       <Square className="w-4 h-4 text-muted-foreground" />
                     )}
                   </button>
-                  <FileIcon type="folder" size="lg" className="flex-shrink-0" />
-                  <span className="font-medium text-base text-gray-900 dark:text-gray-100 truncate">
-                    {folder.name}
-                  </span>
+                  <FileIcon type="folder" size="sm" className="flex-shrink-0" />
+                  <span className="font-medium text-sm text-foreground truncate">{folder.name}</span>
                 </div>
-                <div className="hidden sm:flex sm:col-span-2 items-center text-sm text-gray-500 dark:text-gray-400">
-                  —
-                </div>
-                <div className="hidden sm:flex sm:col-span-2 items-center text-sm text-gray-500 dark:text-gray-400">
-                  {formatDate(folder.created_at)}
-                </div>
+                <div className="hidden sm:flex sm:col-span-2 items-center text-sm text-muted-foreground">—</div>
+                <div className="hidden sm:flex sm:col-span-2 items-center text-sm text-muted-foreground">{formatDate(folder.created_at)}</div>
+                <div className="hidden sm:flex sm:col-span-2 items-center text-sm text-muted-foreground">Folder</div>
               </div>
             ))}
 
@@ -1549,65 +1541,56 @@ function StorageView({ onFileOperation, searchQuery, searchTrigger, onClearSearc
               <div
                 key={`file-${file.id}`}
                 data-card
-                className={`group sm:grid sm:grid-cols-10 sm:gap-4 px-3 sm:px-6 py-2 sm:py-3 hover:bg-gray-50 
-                  dark:hover:bg-gray-800/50 transition-colors cursor-pointer ${isSelected({ ...file, type: 'file' })
-                    ? 'bg-primary-50 dark:bg-primary-900/20'
+                className={`group grid grid-cols-1 sm:grid-cols-12 sm:gap-4 px-3 sm:px-4 py-2.5 
+                  hover:bg-muted/50 transition-colors cursor-pointer ${isSelected({ ...file, type: 'file' })
+                    ? 'bg-primary/5 dark:bg-primary/10'
                     : ''
                   }`}
                 onClick={(e) => handleItemClick(file, 'file', e)}
                 onContextMenu={(e) => handleContextMenu(e, file, 'file')}
                 onDoubleClick={() => setPreviewFile(file)}
               >
-                {/* Mobile Layout - Stack vertically */}
-                <div className="sm:hidden flex items-center gap-2">
+                {/* Mobile */}
+                <div className="sm:hidden flex items-center gap-3">
                   <button
                     onClick={(e) => { e.stopPropagation(); toggleSelection({ ...file, type: 'file' }); }}
-                    className="flex-shrink-0 p-0.5"
+                    className="flex-shrink-0"
                     aria-label="Select file"
                   >
                     {isSelected({ ...file, type: 'file' }) ? (
-                      <CheckSquare className="w-4 h-4 text-primary-600 dark:text-primary-400" />
+                      <CheckSquare className="w-4 h-4 text-primary" />
                     ) : (
                       <Square className="w-4 h-4 text-muted-foreground" />
                     )}
                   </button>
                   <FileIcon mimeType={file.mime_type} size="md" className="flex-shrink-0" />
                   <div className="flex-1 min-w-0">
-                    <div className="font-medium text-sm text-gray-900 dark:text-gray-100 truncate">
-                      {file.name}
-                    </div>
-                    <div className="text-xs text-gray-500 dark:text-gray-400">
-                      {formatFileSize(file.size)} • {formatDate(file.created_at)}
-                    </div>
+                    <div className="font-medium text-sm text-foreground truncate">{file.name}</div>
+                    <div className="text-xs text-muted-foreground">{formatFileSize(file.size)} • {formatDate(file.created_at)}</div>
                   </div>
                 </div>
 
-                {/* Desktop Layout - Grid */}
+                {/* Desktop */}
                 <div className="hidden sm:flex sm:col-span-6 items-center gap-3 min-w-0">
                   <button
                     onClick={(e) => { e.stopPropagation(); toggleSelection({ ...file, type: 'file' }); }}
-                    className="flex-shrink-0 p-0.5 opacity-0 group-hover:opacity-100 transition-opacity
+                    className="flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity
                       data-[selected=true]:opacity-100"
                     data-selected={isSelected({ ...file, type: 'file' })}
                     aria-label="Select file"
                   >
                     {isSelected({ ...file, type: 'file' }) ? (
-                      <CheckSquare className="w-4 h-4 text-primary-600 dark:text-primary-400" />
+                      <CheckSquare className="w-4 h-4 text-primary" />
                     ) : (
                       <Square className="w-4 h-4 text-muted-foreground" />
                     )}
                   </button>
-                  <FileIcon mimeType={file.mime_type} size="lg" className="flex-shrink-0" />
-                  <span className="font-medium text-base text-gray-900 dark:text-gray-100 truncate">
-                    {file.name}
-                  </span>
+                  <FileIcon mimeType={file.mime_type} size="sm" className="flex-shrink-0" />
+                  <span className="font-medium text-sm text-foreground truncate">{file.name}</span>
                 </div>
-                <div className="hidden sm:flex sm:col-span-2 items-center text-sm text-gray-500 dark:text-gray-400">
-                  {formatFileSize(file.size)}
-                </div>
-                <div className="hidden sm:flex sm:col-span-2 items-center text-sm text-gray-500 dark:text-gray-400">
-                  {formatDate(file.created_at)}
-                </div>
+                <div className="hidden sm:flex sm:col-span-2 items-center text-sm text-muted-foreground">{formatFileSize(file.size)}</div>
+                <div className="hidden sm:flex sm:col-span-2 items-center text-sm text-muted-foreground">{formatDate(file.created_at)}</div>
+                <div className="hidden sm:flex sm:col-span-2 items-center text-sm text-muted-foreground truncate">{file.mime_type?.split('/')[1] || 'File'}</div>
               </div>
             ))}
           </div>
