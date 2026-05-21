@@ -94,7 +94,8 @@ function StorageView({ onFileOperation, searchQuery, searchTrigger, onClearSearc
   // Delete confirmation
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleteItem, setDeleteItem] = useState<Partial<Folder & FileType> | null>(null);
-  const [deleteType, setDeleteType] = useState<'folder' | 'file' | null>(null);
+  const [deleteType, setDeleteType] = useState<'folder' | 'file' | 'bulk' | null>(null);
+  const [isBulkDelete, setIsBulkDelete] = useState(false);
 
   // Text file editor
   const [showTextEditor, setShowTextEditor] = useState(false);
@@ -788,7 +789,32 @@ function StorageView({ onFileOperation, searchQuery, searchTrigger, onClearSearc
     setShowDeleteConfirm(false);
 
     try {
-      if (deleteType === 'file') {
+      if (deleteType === 'bulk') {
+        setDeleting(true);
+        setDeleteProgress({ current: 0, total: selectedItems.length, itemName: '' });
+
+        for (let i = 0; i < selectedItems.length; i++) {
+          const item = selectedItems[i];
+          setDeleteProgress({ current: i + 1, total: selectedItems.length, itemName: item.name });
+
+          try {
+            if (item.type === 'file') {
+              await fileAPI.delete(storageId, item.id, currentFolder);
+            } else {
+              await folderAPI.delete(storageId, item.id);
+            }
+            await new Promise(resolve => setTimeout(resolve, 100));
+          } catch (error) {
+            console.error(`Failed to delete ${item.name}:`, error);
+          }
+        }
+
+        setDeleting(false);
+        setDeleteProgress({ current: 0, total: 0, itemName: '' });
+        clearSelection();
+        await refreshData();
+        onFileOperation?.();
+      } else if (deleteType === 'file') {
         await handleFileDelete();
       } else if (deleteType === 'folder') {
         await handleFolderDelete();
@@ -796,8 +822,8 @@ function StorageView({ onFileOperation, searchQuery, searchTrigger, onClearSearc
       // Clean up state after successful deletion
       setDeleteItem(null);
       setDeleteType(null);
+      setIsBulkDelete(false);
     } catch (error) {
-      // Error handling is done in individual delete functions
       console.error('Delete failed:', error);
     }
   };
@@ -1259,38 +1285,14 @@ function StorageView({ onFileOperation, searchQuery, searchTrigger, onClearSearc
                 {/* Delete Button - For all selections and owner/admin/editor */}
                 {['OWNER', 'ADMIN', 'EDITOR'].includes(userRole) && (
                   <button
-                    onClick={async () => {
-                      // For bulk delete, delete each item with progress
+                    onClick={() => {
                       if (selectionCount > 1) {
-                        setDeleting(true);
-                        setDeleteProgress({ current: 0, total: selectionCount, itemName: '' });
-
-                        for (let i = 0; i < selectedItems.length; i++) {
-                          const item = selectedItems[i];
-                          setDeleteProgress({ current: i + 1, total: selectionCount, itemName: item.name });
-
-                          try {
-                            if (item.type === 'file') {
-                              await fileAPI.delete(storageId, item.id, currentFolder);
-                            } else {
-                              await folderAPI.delete(storageId, item.id);
-                            }
-                            // Small delay to show progress
-                            await new Promise(resolve => setTimeout(resolve, 100));
-                          } catch (error) {
-                            console.error(`Failed to delete ${item.name}:`, error);
-                          }
-                        }
-
-                        // Clear delete progress and selection before loading
-                        setDeleting(false);
-                        setDeleteProgress({ current: 0, total: 0, itemName: '' });
-                        clearSelection();
-
-                        await refreshData();
-                        onFileOperation?.();
+                        setIsBulkDelete(true);
+                        setDeleteItem({ name: `${selectionCount} items` });
+                        setDeleteType('bulk');
+                        setShowDeleteConfirm(true);
                       } else {
-                        // Single item - show confirmation modal
+                        setIsBulkDelete(false);
                         const firstItem = selectedItems[0];
                         if (firstItem.type === 'file') {
                           confirmFileDelete(firstItem.id, firstItem.name ?? '');
@@ -1738,15 +1740,17 @@ function StorageView({ onFileOperation, searchQuery, searchTrigger, onClearSearc
       {/* Delete Confirmation Modal */}
       <ConfirmDialog
         isOpen={showDeleteConfirm}
-        onClose={() => setShowDeleteConfirm(false)}
+        onClose={() => { setShowDeleteConfirm(false); setIsBulkDelete(false); }}
         onConfirm={handleConfirmDelete}
-        title={deleteType === 'folder' ? 'Delete Folder' : 'Delete File'}
+        title={deleteType === 'folder' ? 'Delete Folder' : deleteType === 'bulk' ? 'Delete Items' : 'Delete File'}
         message={
           deleteType === 'folder'
             ? `Are you sure you want to delete "${deleteItem?.name}" and all its contents? This action cannot be undone.`
-            : `Are you sure you want to delete "${deleteItem?.name}"? This action cannot be undone.`
+            : deleteType === 'bulk'
+              ? `Are you sure you want to delete ${selectionCount} selected items? This action cannot be undone.`
+              : `Are you sure you want to delete "${deleteItem?.name}"? This action cannot be undone.`
         }
-        highlightText={deleteItem?.name}
+        highlightText={deleteType !== 'bulk' ? deleteItem?.name : undefined}
         confirmText="Delete"
         cancelText="Cancel"
         variant="destructive"
