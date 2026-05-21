@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef, useCallback, ChangeEvent, DragEvent, FormEvent, MouseEvent } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import toast from 'react-hot-toast';
-import { Eye, Download, Share2, Pencil, Trash2, FolderOpen } from 'lucide-react';
+import { Eye, Download, Share2, Pencil, Trash2, FolderOpen, CheckSquare, Square } from 'lucide-react';
 import { storageAPI, folderAPI, fileAPI } from '@/utils/api-client';
 import { LoadingSkeleton, Spinner, Loader } from './ModernLoader';
 import FilePreview from './FilePreview';
@@ -108,7 +108,7 @@ function StorageView({ onFileOperation, searchQuery, searchTrigger, onClearSearc
   // Custom hooks
   const { uploading, progress, uploadFile } = useFileUpload();
   const { contextMenu, showContextMenu, hideContextMenu } = useContextMenu();
-  const { selectedItems, toggleSelection, clearSelection, isSelected, hasSelection, selectionCount } = useFileSelection();
+  const { selectedItems, toggleSelection, selectAll, clearSelection, isSelected, hasSelection, selectionCount } = useFileSelection();
 
   // Initial load - runs only once per storageId
   useEffect(() => {
@@ -1104,11 +1104,20 @@ function StorageView({ onFileOperation, searchQuery, searchTrigger, onClearSearc
         {hasSelection && (
           <div className="selection-bar flex items-center justify-between bg-primary-50 dark:bg-primary-900/20 
             border border-primary-200 dark:border-primary-800 rounded-lg px-2 sm:px-4 py-1.5 sm:py-3">
-            <div className="flex items-center gap-2 sm:gap-4 min-w-0 flex-1">
+            <div className="flex items-center gap-1 sm:gap-2 min-w-0 flex-1 overflow-x-auto">
               <span className="text-xs sm:text-sm font-medium text-primary-900 dark:text-primary-100 whitespace-nowrap">
                 {selectionCount} selected
               </span>
-              <div className="flex items-center gap-1 sm:gap-2 overflow-x-auto">
+              {selectionCount < (folders.length + files.length) && (
+                <button
+                  onClick={() => selectAll([...folders.map(f => ({ ...f, type: 'folder' as const })), ...files.map(f => ({ ...f, type: 'file' as const }))])}
+                  className="p-1.5 sm:p-2 hover:bg-primary-100 dark:hover:bg-primary-800 rounded-lg 
+                    transition-colors text-gray-700 dark:text-gray-300 flex-shrink-0"
+                  title="Select all"
+                >
+                  <CheckSquare className="w-4 h-4 sm:w-5 sm:h-5" />
+                </button>
+              )}
                 {/* Download Button - For files (single or multiple) */}
                 {selectedItems.filter(item => item.type === 'file').length > 0 && (
                   <button
@@ -1308,7 +1317,6 @@ function StorageView({ onFileOperation, searchQuery, searchTrigger, onClearSearc
                     )}
                   </button>
                 )}
-              </div>
             </div>
 
             <button
@@ -1382,6 +1390,20 @@ function StorageView({ onFileOperation, searchQuery, searchTrigger, onClearSearc
                 : ''
                 }`}
             >
+              <button
+                onClick={(e) => { e.stopPropagation(); toggleSelection({ ...folder, type: 'folder' }); }}
+                className="absolute top-2 left-2 z-10 p-0.5 rounded bg-background/80 dark:bg-background/60 
+                  backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-opacity
+                  data-[selected=true]:opacity-100"
+                data-selected={isSelected({ ...folder, type: 'folder' })}
+                aria-label="Select folder"
+              >
+                {isSelected({ ...folder, type: 'folder' }) ? (
+                  <CheckSquare className="w-4 h-4 text-primary-600 dark:text-primary-400" />
+                ) : (
+                  <Square className="w-4 h-4 text-muted-foreground" />
+                )}
+              </button>
               <div className="p-4 flex flex-col items-center">
                 <div className="mb-2 sm:mb-3 transform group-hover:scale-110 transition-transform">
                   <FileIcon type="folder" size="lg" />
@@ -1411,6 +1433,20 @@ function StorageView({ onFileOperation, searchQuery, searchTrigger, onClearSearc
                 : ''
                 }`}
             >
+              <button
+                onClick={(e) => { e.stopPropagation(); toggleSelection({ ...file, type: 'file' }); }}
+                className="absolute top-2 left-2 z-10 p-0.5 rounded bg-background/80 dark:bg-background/60 
+                  backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-opacity
+                  data-[selected=true]:opacity-100"
+                data-selected={isSelected({ ...file, type: 'file' })}
+                aria-label="Select file"
+              >
+                {isSelected({ ...file, type: 'file' }) ? (
+                  <CheckSquare className="w-4 h-4 text-primary-600 dark:text-primary-400" />
+                ) : (
+                  <Square className="w-4 h-4 text-muted-foreground" />
+                )}
+              </button>
               <div className="p-4 flex flex-col items-center">
                 <div className="mb-2 sm:mb-3 transform group-hover:scale-110 transition-transform">
                   <FileIcon mimeType={file.mime_type} size="lg" />
@@ -1445,7 +1481,7 @@ function StorageView({ onFileOperation, searchQuery, searchTrigger, onClearSearc
               <div
                 key={`folder-${folder.id}`}
                 data-card
-                className={`sm:grid sm:grid-cols-10 sm:gap-4 px-3 sm:px-6 py-2 sm:py-3 hover:bg-gray-50 
+                className={`group sm:grid sm:grid-cols-10 sm:gap-4 px-3 sm:px-6 py-2 sm:py-3 hover:bg-gray-50 
                   dark:hover:bg-gray-800/50 transition-colors cursor-pointer ${isSelected({ ...folder, type: 'folder' })
                     ? 'bg-primary-50 dark:bg-primary-900/20'
                     : ''
@@ -1455,6 +1491,17 @@ function StorageView({ onFileOperation, searchQuery, searchTrigger, onClearSearc
               >
                 {/* Mobile Layout - Stack vertically */}
                 <div className="sm:hidden flex items-center gap-2">
+                  <button
+                    onClick={(e) => { e.stopPropagation(); toggleSelection({ ...folder, type: 'folder' }); }}
+                    className="flex-shrink-0 p-0.5"
+                    aria-label="Select folder"
+                  >
+                    {isSelected({ ...folder, type: 'folder' }) ? (
+                      <CheckSquare className="w-4 h-4 text-primary-600 dark:text-primary-400" />
+                    ) : (
+                      <Square className="w-4 h-4 text-muted-foreground" />
+                    )}
+                  </button>
                   <FileIcon type="folder" size="md" className="flex-shrink-0" />
                   <div className="flex-1 min-w-0">
                     <div className="font-medium text-sm text-gray-900 dark:text-gray-100 truncate">
@@ -1468,6 +1515,19 @@ function StorageView({ onFileOperation, searchQuery, searchTrigger, onClearSearc
 
                 {/* Desktop Layout - Grid */}
                 <div className="hidden sm:flex sm:col-span-6 items-center gap-3 min-w-0">
+                  <button
+                    onClick={(e) => { e.stopPropagation(); toggleSelection({ ...folder, type: 'folder' }); }}
+                    className="flex-shrink-0 p-0.5 opacity-0 group-hover:opacity-100 transition-opacity
+                      data-[selected=true]:opacity-100"
+                    data-selected={isSelected({ ...folder, type: 'folder' })}
+                    aria-label="Select folder"
+                  >
+                    {isSelected({ ...folder, type: 'folder' }) ? (
+                      <CheckSquare className="w-4 h-4 text-primary-600 dark:text-primary-400" />
+                    ) : (
+                      <Square className="w-4 h-4 text-muted-foreground" />
+                    )}
+                  </button>
                   <FileIcon type="folder" size="lg" className="flex-shrink-0" />
                   <span className="font-medium text-base text-gray-900 dark:text-gray-100 truncate">
                     {folder.name}
@@ -1487,7 +1547,7 @@ function StorageView({ onFileOperation, searchQuery, searchTrigger, onClearSearc
               <div
                 key={`file-${file.id}`}
                 data-card
-                className={`sm:grid sm:grid-cols-10 sm:gap-4 px-3 sm:px-6 py-2 sm:py-3 hover:bg-gray-50 
+                className={`group sm:grid sm:grid-cols-10 sm:gap-4 px-3 sm:px-6 py-2 sm:py-3 hover:bg-gray-50 
                   dark:hover:bg-gray-800/50 transition-colors cursor-pointer ${isSelected({ ...file, type: 'file' })
                     ? 'bg-primary-50 dark:bg-primary-900/20'
                     : ''
@@ -1498,6 +1558,17 @@ function StorageView({ onFileOperation, searchQuery, searchTrigger, onClearSearc
               >
                 {/* Mobile Layout - Stack vertically */}
                 <div className="sm:hidden flex items-center gap-2">
+                  <button
+                    onClick={(e) => { e.stopPropagation(); toggleSelection({ ...file, type: 'file' }); }}
+                    className="flex-shrink-0 p-0.5"
+                    aria-label="Select file"
+                  >
+                    {isSelected({ ...file, type: 'file' }) ? (
+                      <CheckSquare className="w-4 h-4 text-primary-600 dark:text-primary-400" />
+                    ) : (
+                      <Square className="w-4 h-4 text-muted-foreground" />
+                    )}
+                  </button>
                   <FileIcon mimeType={file.mime_type} size="md" className="flex-shrink-0" />
                   <div className="flex-1 min-w-0">
                     <div className="font-medium text-sm text-gray-900 dark:text-gray-100 truncate">
@@ -1511,6 +1582,19 @@ function StorageView({ onFileOperation, searchQuery, searchTrigger, onClearSearc
 
                 {/* Desktop Layout - Grid */}
                 <div className="hidden sm:flex sm:col-span-6 items-center gap-3 min-w-0">
+                  <button
+                    onClick={(e) => { e.stopPropagation(); toggleSelection({ ...file, type: 'file' }); }}
+                    className="flex-shrink-0 p-0.5 opacity-0 group-hover:opacity-100 transition-opacity
+                      data-[selected=true]:opacity-100"
+                    data-selected={isSelected({ ...file, type: 'file' })}
+                    aria-label="Select file"
+                  >
+                    {isSelected({ ...file, type: 'file' }) ? (
+                      <CheckSquare className="w-4 h-4 text-primary-600 dark:text-primary-400" />
+                    ) : (
+                      <Square className="w-4 h-4 text-muted-foreground" />
+                    )}
+                  </button>
                   <FileIcon mimeType={file.mime_type} size="lg" className="flex-shrink-0" />
                   <span className="font-medium text-base text-gray-900 dark:text-gray-100 truncate">
                     {file.name}
