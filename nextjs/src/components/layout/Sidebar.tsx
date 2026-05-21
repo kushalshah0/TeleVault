@@ -46,24 +46,24 @@ function NavItem({ icon, label, active, collapsed, onClick }: NavItemProps) {
     <div className="relative group">
       <button
         onClick={onClick}
-        className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all font-medium
+        className={`w-full flex items-center gap-3 px-2 py-2.5 rounded-lg transition-all font-medium
           ${active
             ? 'bg-primary text-primary-foreground shadow-sm'
             : 'text-foreground hover:bg-accent'
           }
-          ${collapsed ? 'justify-center' : ''}
+          ${collapsed ? 'lg:justify-center lg:px-0' : ''}
         `}
       >
         <span className="w-5 h-5 flex-shrink-0">{icon}</span>
-        {!collapsed && <span className="truncate">{label}</span>}
+        <span className={`truncate lg:block hidden ${collapsed ? 'lg:hidden' : ''}`}>{label}</span>
+        <span className="lg:hidden block truncate">{label}</span>
       </button>
-      {collapsed && (
-        <div className="absolute left-full top-1/2 -translate-y-1/2 ml-2 px-2 py-1 bg-popover 
-          text-popover-foreground text-xs rounded-md shadow-lg border border-border 
-          opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity whitespace-nowrap z-50">
-          {label}
-        </div>
-      )}
+      {/* Tooltip - desktop only, shows on hover when collapsed */}
+      <div className="hidden lg:block absolute left-full top-1/2 -translate-y-1/2 ml-2 px-2 py-1 bg-popover 
+        text-popover-foreground text-xs rounded-md shadow-lg border border-border 
+        opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity whitespace-nowrap z-50">
+        {label}
+      </div>
     </div>
   )
 }
@@ -93,7 +93,7 @@ function Sidebar({ storages = [], currentStorage, onStorageChange, usage, isOpen
       {/* Mobile Overlay */}
       {isOpen && (
         <div
-          className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 lg:hidden animate-fade-in"
+          className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[45] lg:hidden animate-fade-in"
           onClick={onClose}
         />
       )}
@@ -105,15 +105,15 @@ function Sidebar({ storages = [], currentStorage, onStorageChange, usage, isOpen
           bg-card border-r border-border
           transform transition-all duration-300 ease-in-out
           ${isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
-          ${collapsed ? 'lg:w-16' : 'lg:w-64'}
+          w-64 ${collapsed ? 'lg:w-16' : 'lg:w-64'}
           flex flex-col h-screen
         `}
       >
         {/* Header */}
         <div className="flex items-center justify-between px-4 py-4 border-b border-border">
-          <div className={`flex items-center gap-2 overflow-hidden transition-all duration-300 ${collapsed ? 'w-0 opacity-0 p-0' : 'w-auto opacity-100'}`}>
-            <span className="text-2xl">☁️</span>
-            <h2 className="text-lg font-semibold text-foreground truncate">TeleVault</h2>
+          <div className="flex items-center gap-2 overflow-hidden">
+            <h2 className={`text-lg font-semibold text-foreground truncate lg:block hidden ${collapsed ? 'lg:hidden' : ''}`}>TeleVault</h2>
+            <h2 className="text-lg font-semibold text-foreground truncate lg:hidden">TeleVault</h2>
           </div>
           <button
             onClick={() => setCollapsed(!collapsed)}
@@ -184,7 +184,12 @@ function Sidebar({ storages = [], currentStorage, onStorageChange, usage, isOpen
 
           {/* Separator */}
           {storages.length > 0 && (
-            <div className={`my-2 ${collapsed ? 'mx-2' : 'mx-3'}`}>
+            <div className="my-2 mx-3 lg:block hidden">
+              <div className="border-t border-border" />
+            </div>
+          )}
+          {storages.length > 0 && (
+            <div className="my-2 mx-3 lg:hidden">
               <div className="border-t border-border" />
             </div>
           )}
@@ -199,24 +204,23 @@ function Sidebar({ storages = [], currentStorage, onStorageChange, usage, isOpen
                       router.push(`/storage/${storage.id}`)
                       onStorageChange?.(storage)
                     })}
-                    className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all font-medium
+                    className={`w-full flex items-center gap-3 px-2 py-2.5 rounded-lg transition-all font-medium
                       ${currentStorage?.id === storage.id
                         ? 'bg-primary text-primary-foreground shadow-sm'
                         : 'text-foreground hover:bg-accent'
                       }
-                      ${collapsed ? 'justify-center' : ''}
+                      ${collapsed ? 'lg:justify-center lg:px-0' : ''}
                     `}
                   >
                     <Folder className="w-5 h-5 flex-shrink-0" />
-                    {!collapsed && <span className="truncate">{storage.name}</span>}
+                    <span className={`truncate lg:block hidden ${collapsed ? 'lg:hidden' : ''}`}>{storage.name}</span>
+                    <span className="lg:hidden block truncate">{storage.name}</span>
                   </button>
-                  {collapsed && (
-                    <div className="absolute left-full top-1/2 -translate-y-1/2 ml-2 px-2 py-1 bg-popover 
-                      text-popover-foreground text-xs rounded-md shadow-lg border border-border 
-                      opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity whitespace-nowrap z-50">
-                      {storage.name}
-                    </div>
-                  )}
+                  <div className="hidden lg:block absolute left-full top-1/2 -translate-y-1/2 ml-2 px-2 py-1 bg-popover 
+                    text-popover-foreground text-xs rounded-md shadow-lg border border-border 
+                    opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity whitespace-nowrap z-50">
+                    {storage.name}
+                  </div>
                 </div>
               ))}
             </div>
@@ -225,7 +229,21 @@ function Sidebar({ storages = [], currentStorage, onStorageChange, usage, isOpen
 
         {/* Usage Footer */}
         {usage && !collapsed && (
-          <div className="p-4 border-t border-border">
+          <div className="p-4 border-t border-border hidden lg:block">
+            <p className="text-xs font-medium text-muted-foreground mb-2">Storage Used</p>
+            <div className="w-full bg-accent rounded-full h-1.5 mb-1">
+              <div
+                className="bg-primary h-1.5 rounded-full transition-all duration-300"
+                style={{ width: `${Math.min((usage.used_bytes / (10 * 1024 * 1024 * 1024)) * 100, 100)}%` }}
+              />
+            </div>
+            <p className="text-xs text-muted-foreground">
+              {formatFileSize(usage.used_bytes)} / 10 GB
+            </p>
+          </div>
+        )}
+        {usage && (
+          <div className="p-4 border-t border-border lg:hidden">
             <p className="text-xs font-medium text-muted-foreground mb-2">Storage Used</p>
             <div className="w-full bg-accent rounded-full h-1.5 mb-1">
               <div
