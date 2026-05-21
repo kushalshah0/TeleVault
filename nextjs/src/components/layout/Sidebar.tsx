@@ -1,6 +1,17 @@
 'use client'
 
+import { useState } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
+import {
+  Database,
+  Clock,
+  Star,
+  Activity,
+  Users,
+  Folder,
+  ChevronLeft,
+  ChevronRight,
+} from 'lucide-react'
 
 export interface Storage {
   id: number
@@ -22,9 +33,45 @@ export interface SidebarProps {
   isAdmin?: boolean
 }
 
+interface NavItemProps {
+  icon: React.ReactNode
+  label: string
+  active: boolean
+  collapsed: boolean
+  onClick: () => void
+}
+
+function NavItem({ icon, label, active, collapsed, onClick }: NavItemProps) {
+  return (
+    <div className="relative group">
+      <button
+        onClick={onClick}
+        className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all font-medium
+          ${active
+            ? 'bg-primary text-primary-foreground shadow-sm'
+            : 'text-foreground hover:bg-accent'
+          }
+          ${collapsed ? 'justify-center' : ''}
+        `}
+      >
+        <span className="w-5 h-5 flex-shrink-0">{icon}</span>
+        {!collapsed && <span className="truncate">{label}</span>}
+      </button>
+      {collapsed && (
+        <div className="absolute left-full top-1/2 -translate-y-1/2 ml-2 px-2 py-1 bg-popover 
+          text-popover-foreground text-xs rounded-md shadow-lg border border-border 
+          opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity whitespace-nowrap z-50">
+          {label}
+        </div>
+      )}
+    </div>
+  )
+}
+
 function Sidebar({ storages = [], currentStorage, onStorageChange, usage, isOpen, onClose, isAdmin }: SidebarProps) {
   const router = useRouter()
   const pathname = usePathname()
+  const [collapsed, setCollapsed] = useState(false)
 
   const isActive = (path: string) => pathname === path
 
@@ -55,18 +102,34 @@ function Sidebar({ storages = [], currentStorage, onStorageChange, usage, isOpen
       <aside
         className={`
           fixed lg:static inset-y-0 left-0 z-50
-          w-64 bg-card border-r border-border
-          transform transition-transform duration-200 ease-in-out
+          bg-card border-r border-border
+          transform transition-all duration-300 ease-in-out
           ${isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
+          ${collapsed ? 'lg:w-16' : 'lg:w-64'}
           flex flex-col h-screen
         `}
       >
-        {/* Mobile Close Button */}
-        <div className="lg:hidden flex items-center justify-between px-4 pt-4 pb-3 border-b border-border">
-          <h2 className="text-lg font-semibold text-foreground">Menu</h2>
+        {/* Header */}
+        <div className="flex items-center justify-between px-4 py-4 border-b border-border">
+          <div className={`flex items-center gap-2 overflow-hidden transition-all duration-300 ${collapsed ? 'w-0 opacity-0 p-0' : 'w-auto opacity-100'}`}>
+            <span className="text-2xl">☁️</span>
+            <h2 className="text-lg font-semibold text-foreground truncate">TeleVault</h2>
+          </div>
+          <button
+            onClick={() => setCollapsed(!collapsed)}
+            className="hidden lg:flex p-1.5 hover:bg-accent rounded-lg transition-colors flex-shrink-0"
+            aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+          >
+            {collapsed ? (
+              <ChevronRight className="w-4 h-4 text-muted-foreground" />
+            ) : (
+              <ChevronLeft className="w-4 h-4 text-muted-foreground" />
+            )}
+          </button>
+          {/* Mobile Close Button */}
           <button
             onClick={onClose}
-            className="p-2 hover:bg-accent rounded-lg transition-colors"
+            className="lg:hidden p-1.5 hover:bg-accent rounded-lg transition-colors"
             aria-label="Close menu"
           >
             <svg className="w-5 h-5 text-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -76,97 +139,62 @@ function Sidebar({ storages = [], currentStorage, onStorageChange, usage, isOpen
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 p-3 space-y-1 overflow-y-auto scrollbar-thin">
-          {/* Quick Access Section */}
-          <div className="mb-6">
-            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider px-3 mb-2">
-              Quick Access
-            </p>
+        <nav className="flex-1 p-2 space-y-1 overflow-y-auto scrollbar-thin">
+          <NavItem
+            icon={<Database className="w-5 h-5" />}
+            label="All Storages"
+            active={isActive('/dashboard')}
+            collapsed={collapsed}
+            onClick={() => handleNavigation(() => router.push('/dashboard'))}
+          />
 
-            <button
-              onClick={() => handleNavigation(() => router.push('/dashboard'))}
-              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all font-medium
-                ${isActive('/dashboard')
-                  ? 'bg-primary text-primary-foreground shadow-sm'
-                  : 'text-foreground hover:bg-accent'
-                }`}
-            >
-              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4" />
-              </svg>
-              <span>All Storages</span>
-            </button>
+          <NavItem
+            icon={<Clock className="w-5 h-5" />}
+            label="Recent"
+            active={isActive('/recent')}
+            collapsed={collapsed}
+            onClick={() => handleNavigation(() => router.push('/recent'))}
+          />
 
-            <button
-              onClick={() => handleNavigation(() => router.push('/recent'))}
-              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all font-medium
-                ${isActive('/recent')
-                  ? 'bg-primary text-primary-foreground shadow-sm'
-                  : 'text-foreground hover:bg-accent'
-                }`}
-            >
-              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              <span>Recent</span>
-            </button>
+          <NavItem
+            icon={<Star className="w-5 h-5" />}
+            label="Starred"
+            active={isActive('/starred')}
+            collapsed={collapsed}
+            onClick={() => handleNavigation(() => router.push('/starred'))}
+          />
 
-            <button
-              onClick={() => handleNavigation(() => router.push('/starred'))}
-              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all font-medium
-                ${isActive('/starred')
-                  ? 'bg-primary text-primary-foreground shadow-sm'
-                  : 'text-foreground hover:bg-accent'
-                }`}
-            >
-              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
-              </svg>
-              <span>Starred</span>
-            </button>
+          <NavItem
+            icon={<Activity className="w-5 h-5" />}
+            label="Activity"
+            active={isActive('/activity')}
+            collapsed={collapsed}
+            onClick={() => handleNavigation(() => router.push('/activity'))}
+          />
 
-            <button
-              onClick={() => handleNavigation(() => router.push('/activity'))}
-              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all font-medium
-                ${isActive('/activity')
-                  ? 'bg-primary text-primary-foreground shadow-sm'
-                  : 'text-foreground hover:bg-accent'
-                }`}
-            >
-              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
-              </svg>
-              <span>Activity</span>
-            </button>
+          {isAdmin && (
+            <NavItem
+              icon={<Users className="w-5 h-5" />}
+              label="Users"
+              active={isActive('/users')}
+              collapsed={collapsed}
+              onClick={() => handleNavigation(() => router.push('/users'))}
+            />
+          )}
 
-            {isAdmin && (
-              <button
-                onClick={() => handleNavigation(() => router.push('/users'))}
-                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all font-medium
-                  ${isActive('/users')
-                    ? 'bg-primary text-primary-foreground shadow-sm'
-                    : 'text-foreground hover:bg-accent'
-                  }`}
-              >
-                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
-                </svg>
-                <span>Users</span>
-              </button>
-            )}
-          </div>
-
-          {/* My Storages Section */}
+          {/* Separator */}
           {storages.length > 0 && (
-            <div>
-              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider px-3 mb-2">
-                My Storages
-              </p>
+            <div className={`my-2 ${collapsed ? 'mx-2' : 'mx-3'}`}>
+              <div className="border-t border-border" />
+            </div>
+          )}
 
-              <div className="space-y-1">
-                {storages.map((storage) => (
+          {/* Storages */}
+          {storages.length > 0 && (
+            <div className="space-y-1">
+              {storages.map((storage) => (
+                <div key={storage.id} className="relative group">
                   <button
-                    key={storage.id}
                     onClick={() => handleNavigation(() => {
                       router.push(`/storage/${storage.id}`)
                       onStorageChange?.(storage)
@@ -175,19 +203,41 @@ function Sidebar({ storages = [], currentStorage, onStorageChange, usage, isOpen
                       ${currentStorage?.id === storage.id
                         ? 'bg-primary text-primary-foreground shadow-sm'
                         : 'text-foreground hover:bg-accent'
-                      }`}
-                    title={storage.name}
+                      }
+                      ${collapsed ? 'justify-center' : ''}
+                    `}
                   >
-                    <svg className="w-5 h-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
-                    </svg>
-                    <span className="truncate">{storage.name}</span>
+                    <Folder className="w-5 h-5 flex-shrink-0" />
+                    {!collapsed && <span className="truncate">{storage.name}</span>}
                   </button>
-                ))}
-              </div>
+                  {collapsed && (
+                    <div className="absolute left-full top-1/2 -translate-y-1/2 ml-2 px-2 py-1 bg-popover 
+                      text-popover-foreground text-xs rounded-md shadow-lg border border-border 
+                      opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity whitespace-nowrap z-50">
+                      {storage.name}
+                    </div>
+                  )}
+                </div>
+              ))}
             </div>
           )}
         </nav>
+
+        {/* Usage Footer */}
+        {usage && !collapsed && (
+          <div className="p-4 border-t border-border">
+            <p className="text-xs font-medium text-muted-foreground mb-2">Storage Used</p>
+            <div className="w-full bg-accent rounded-full h-1.5 mb-1">
+              <div
+                className="bg-primary h-1.5 rounded-full transition-all duration-300"
+                style={{ width: `${Math.min((usage.used_bytes / (10 * 1024 * 1024 * 1024)) * 100, 100)}%` }}
+              />
+            </div>
+            <p className="text-xs text-muted-foreground">
+              {formatFileSize(usage.used_bytes)} / 10 GB
+            </p>
+          </div>
+        )}
       </aside>
     </>
   )

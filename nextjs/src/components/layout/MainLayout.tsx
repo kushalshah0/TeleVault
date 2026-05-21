@@ -53,7 +53,7 @@ function MainLayout({
   }
 
   return (
-    <div className="flex h-screen bg-gray-50 dark:bg-gray-900">
+    <div className="flex h-screen bg-background">
       {/* Sidebar */}
       <Sidebar
         storages={storages}
@@ -66,7 +66,7 @@ function MainLayout({
       />
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col overflow-hidden w-full lg:w-auto">
+      <div className="flex-1 flex flex-col overflow-hidden">
         {/* Header */}
         <Header
           user={user}
@@ -77,7 +77,7 @@ function MainLayout({
         />
 
         {/* Page Content */}
-        <main className="flex-1 overflow-y-auto bg-gray-50 dark:bg-gray-900">
+        <main className="flex-1 overflow-y-auto bg-background">
           <div className="container mx-auto px-4 sm:px-6 py-4 sm:py-6 max-w-7xl">
             {isValidElement(children) && (children.type as any)?.name === 'Dashboard'
               ? cloneElement(children as any, { storages, onRefresh: onRefreshStorages })

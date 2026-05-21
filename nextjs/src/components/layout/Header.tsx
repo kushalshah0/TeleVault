@@ -28,24 +28,15 @@ function Header({ user, onLogout, onSearch, onMenuToggle, searchValue = '' }: He
   return (
     <header className="bg-background/95 backdrop-blur-lg border-b border-border sticky top-0 z-40">
       <div className="flex items-center justify-between px-4 sm:px-6 py-3">
-        {/* App Logo - Mobile (Clickable to open sidebar) */}
+        {/* Menu Button - Mobile */}
         <button
           onClick={onMenuToggle}
-          className="flex items-center gap-2 lg:hidden hover:opacity-80 transition-opacity"
+          className="flex items-center lg:hidden p-2 hover:bg-accent rounded-lg transition-colors"
         >
-          <span className="text-2xl">☁️</span>
-          <h1 className="text-xl font-bold text-foreground">
-            TeleVault
-          </h1>
+          <svg className="w-5 h-5 text-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+          </svg>
         </button>
-
-        {/* App Logo - Desktop (Non-clickable) */}
-        <div className="hidden lg:flex items-center gap-2">
-          <span className="text-2xl">☁️</span>
-          <h1 className="text-xl font-bold text-foreground">
-            TeleVault
-          </h1>
-        </div>
         
         {/* Search Bar */}
         <div className="flex-1 max-w-2xl hidden md:block mx-4">
