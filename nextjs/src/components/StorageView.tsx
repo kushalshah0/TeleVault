@@ -665,6 +665,20 @@ function StorageView({ onFileOperation, searchQuery, searchTrigger, onClearSearc
     return textExtensions.includes(extension);
   };
 
+  // Check if file can be previewed
+  const canPreviewFile = (file: any) => {
+    const mimeType = file.mime_type || file.mimeType || '';
+    const extension = file.name.split('.').pop()?.toLowerCase() ?? '';
+    const previewableExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'bmp', 'ico', 'pdf', 'mp4', 'webm', 'ogg', 'mov', 'avi', 'mp3', 'wav', 'ogg', 'flac', 'aac', 'txt', 'json', 'md', 'csv', 'xml', 'html', 'css', 'js', 'py', 'log', 'yml', 'yaml', 'ini', 'conf', 'sh', 'bat'];
+    return mimeType.startsWith('image/') ||
+      mimeType === 'application/pdf' ||
+      mimeType.startsWith('video/') ||
+      mimeType.startsWith('audio/') ||
+      mimeType.startsWith('text/') ||
+      ['application/json', 'application/javascript', 'application/xml'].includes(mimeType) ||
+      previewableExtensions.includes(extension);
+  };
+
   const handleEditFile = async (file: any) => {
     try {
       // Download file content
@@ -689,14 +703,17 @@ function StorageView({ onFileOperation, searchQuery, searchTrigger, onClearSearc
     const menuItems = [];
 
     if (type === 'file') {
-      menuItems.push(
-        {
-          icon: '👁️', label: 'Preview', onClick: () => {
-            // Track in recent files when previewing from context menu
-            recentUtils.addRecent(item, storageId, storage?.name || 'Storage');
-            setPreviewFile(item);
+      if (canPreviewFile(item)) {
+        menuItems.push(
+          {
+            icon: '👁️', label: 'Preview', onClick: () => {
+              recentUtils.addRecent(item, storageId, storage?.name || 'Storage');
+              setPreviewFile(item);
+            }
           }
-        },
+        );
+      }
+      menuItems.push(
         { icon: '⬇️', label: 'Download', onClick: () => handleFileDownload(item) },
         { icon: '🔗', label: 'Share', onClick: () => { setSharingItem({ id: item.id, name: item.name, type: 'file' }); setShowShareModal(true); } }
       );
@@ -1132,8 +1149,8 @@ function StorageView({ onFileOperation, searchQuery, searchTrigger, onClearSearc
                   </button>
                 )}
 
-                {/* Preview Button - Only for single file */}
-                {selectionCount === 1 && selectedItems[0].type === 'file' && (
+                {/* Preview Button - Only for single file that can be previewed */}
+                {selectionCount === 1 && selectedItems[0].type === 'file' && canPreviewFile(selectedItems[0]) && (
                   <button
                     onClick={() => {
                       // Track in recent files when previewing

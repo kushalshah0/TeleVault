@@ -51,6 +51,19 @@ export default function FolderSharePage() {
   const [lastClickedItem, setLastClickedItem] = useState<{ id: number; timestamp: number } | null>(null)
   const [previewFile, setPreviewFile] = useState<FolderItem | null>(null)
 
+  const canPreviewFile = (file: FolderItem) => {
+    const mimeType = file.mime_type || '';
+    const extension = file.name.split('.').pop()?.toLowerCase() ?? '';
+    const previewableExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'bmp', 'ico', 'pdf', 'mp4', 'webm', 'ogg', 'mov', 'avi', 'mp3', 'wav', 'ogg', 'flac', 'aac', 'txt', 'json', 'md', 'csv', 'xml', 'html', 'css', 'js', 'py', 'log', 'yml', 'yaml', 'ini', 'conf', 'sh', 'bat'];
+    return mimeType.startsWith('image/') ||
+      mimeType === 'application/pdf' ||
+      mimeType.startsWith('video/') ||
+      mimeType.startsWith('audio/') ||
+      mimeType.startsWith('text/') ||
+      ['application/json', 'application/javascript', 'application/xml'].includes(mimeType) ||
+      previewableExtensions.includes(extension);
+  };
+
   useEffect(() => {
     if (!token || String(token).trim() === '') {
       setLoading(false)
@@ -639,8 +652,11 @@ export default function FolderSharePage() {
                     </svg>
                   </button>
                 )}
-                {/* Preview Button - Only for single file */}
-                {selectedItems.size === 1 && Array.from(selectedItems).every(id => items.find(i => i.id === id)?.type === 'file') && (
+                {/* Preview Button - Only for single file that can be previewed */}
+                {selectedItems.size === 1 && Array.from(selectedItems).every(id => {
+                  const item = items.find(i => i.id === id);
+                  return item?.type === 'file' && canPreviewFile(item);
+                }) && (
                   <button
                     onClick={() => {
                       const fileId = Array.from(selectedItems)[0]
