@@ -22,6 +22,7 @@ export interface ContextMenuProps {
 function ContextMenu({ x, y, items = [], onClose }: ContextMenuProps) {
   const menuRef = useRef<HTMLDivElement>(null)
   const [position, setPosition] = useState({ x: 0, y: 0 })
+  const [origin, setOrigin] = useState({ x: 0, y: 0 })
   const [isVisible, setIsVisible] = useState(false)
 
   useEffect(() => {
@@ -47,6 +48,7 @@ function ContextMenu({ x, y, items = [], onClose }: ContextMenuProps) {
     adjustedY = Math.max(8, adjustedY)
 
     setPosition({ x: adjustedX, y: adjustedY })
+    setOrigin({ x: x - adjustedX, y: y - adjustedY })
 
     requestAnimationFrame(() => setIsVisible(true))
   }, [x, y])
@@ -74,18 +76,17 @@ function ContextMenu({ x, y, items = [], onClose }: ContextMenuProps) {
   }, [onClose])
 
   return (
-    <div
-      className="fixed inset-0 z-50 pointer-events-none"
-    >
+    <div className="fixed inset-0 z-50 pointer-events-none">
       <div
         ref={menuRef}
         className={`absolute pointer-events-auto min-w-[200px] rounded-xl border border-border 
           bg-popover shadow-2xl backdrop-blur-sm py-1.5 overflow-hidden
-          transition-all duration-150 ease-out
-          ${isVisible ? 'opacity-100 scale-100' : 'opacity-0 scale-95'}`}
+          transition-opacity duration-150 ease-out
+          ${isVisible ? 'opacity-100' : 'opacity-0'}`}
         style={{
           left: `${position.x}px`,
           top: `${position.y}px`,
+          transformOrigin: `${origin.x}px ${origin.y}px`,
         }}
       >
         {items.map((item, index) => (
