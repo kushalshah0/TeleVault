@@ -60,6 +60,12 @@ frontend/build/
 frontend/.env.example
 frontend/.env.production
 
+# Next.js
+nextjs/node_modules/
+nextjs/.next/
+nextjs/docs/
+nextjs/televault.zip
+
 PROJECT_STRUCTURE.txt
 RENDER_DEPLOY.md
 DOCKER_GUIDE.md
