@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { useParams } from 'next/navigation'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
@@ -48,7 +48,7 @@ export default function FolderSharePage() {
   const [selectedItems, setSelectedItems] = useState<Set<number>>(new Set())
   const [currentPath, setCurrentPath] = useState('')
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
-  const [lastClickedItem, setLastClickedItem] = useState<{ id: number; timestamp: number } | null>(null)
+  const clickTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const [previewFile, setPreviewFile] = useState<FolderItem | null>(null)
 
   const canPreviewFile = (file: FolderItem) => {
@@ -343,33 +343,37 @@ export default function FolderSharePage() {
   }
 
   const handleItemClick = (item: FolderItem, e: React.MouseEvent) => {
-    const now = Date.now()
-    const DOUBLE_CLICK_DELAY = 400
-    const isCtrlPressed = e.ctrlKey || e.metaKey
-    
-    if (lastClickedItem && lastClickedItem.id === item.id && (now - lastClickedItem.timestamp) < DOUBLE_CLICK_DELAY) {
-      // Double click - open folder or download file
+    e.stopPropagation()
+
+    if (clickTimerRef.current) {
+      clearTimeout(clickTimerRef.current)
+      clickTimerRef.current = null
+    }
+
+    if (e.detail === 2) {
       if (item.type === 'folder') {
         handleNavigate(item.name)
       } else {
-        handleFileDownload(item)
+        setPreviewFile(item)
       }
-      setLastClickedItem(null)
-    } else {
-      // Single click - select item
-      setLastClickedItem({ id: item.id, timestamp: now })
+      return
+    }
+
+    const isCtrlPressed = e.ctrlKey || e.metaKey
+
+    // Single click - defer selection to distinguish from double-click
+    clickTimerRef.current = setTimeout(() => {
       if (isCtrlPressed) {
-        // Ctrl+Click - toggle selection
         toggleSelect(item.id)
       } else {
-        // Without Ctrl - clear selection and select only this item
         if (selectedItems.has(item.id)) {
           setSelectedItems(new Set())
         } else {
           setSelectedItems(new Set([item.id]))
         }
       }
-    }
+      clickTimerRef.current = null
+    }, 200)
   }
 
   const handleOpenClick = (item: FolderItem, e: React.MouseEvent) => {
@@ -748,7 +752,7 @@ export default function FolderSharePage() {
                     </div>
                   </div>
                   {/* Desktop Layout */}
-                  <div className="hidden sm:grid sm:grid-cols-12 sm:gap-4 sm:items-center">
+                    <div className="hidden sm:grid sm:grid-cols-12 sm:gap-4 sm:items-center">
                     <div className="col-span-6 flex items-center gap-3">
                       <button 
                         onClick={(e) => handleOpenClick(item, e)}
@@ -784,7 +788,7 @@ export default function FolderSharePage() {
                     </div>
                   </div>
                   {/* Desktop Layout */}
-                  <div className="hidden sm:grid sm:grid-cols-12 sm:gap-4 sm:items-center">
+                    <div className="hidden sm:grid sm:grid-cols-12 sm:gap-4 sm:items-center">
                     <div className="col-span-6 flex items-center gap-3">
                       <FileIcon mimeType={item.mime_type || ''} size="sm" />
                       <span className="font-medium text-gray-900 dark:text-gray-100 truncate">{item.name}</span>
@@ -810,15 +814,15 @@ export default function FolderSharePage() {
                 <div
                   key={item.id}
                   onClick={(e) => handleItemClick(item, e)}
-                  className={`group relative flex flex-col items-center p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700/50 cursor-pointer transition-all ${
+                  className={`group relative flex flex-col items-center p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700/50 cursor-pointer transition-all min-w-0 ${
                     selectedItems.has(item.id) ? 'bg-primary-50 dark:bg-primary-900/20 ring-2 ring-primary-500' : ''
                   }`}
                 >
-                  <div className="flex flex-col items-center gap-2 mt-2">
-                    <svg className="w-12 h-12 text-yellow-500" fill="currentColor" viewBox="0 0 24 24">
+                  <div className="flex flex-col items-center gap-2 mt-2 min-w-0 w-full">
+                    <svg className="w-12 h-12 text-yellow-500 flex-shrink-0" fill="currentColor" viewBox="0 0 24 24">
                       <path d="M10 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z"/>
                     </svg>
-                    <span className="text-sm font-medium text-gray-900 dark:text-gray-100 text-center line-clamp-2">{item.name}</span>
+                    <span className="text-sm font-medium text-gray-900 dark:text-gray-100 text-center line-clamp-2 break-all w-full">{item.name}</span>
                   </div>
                 </div>
               ))}
@@ -827,13 +831,13 @@ export default function FolderSharePage() {
                 <div
                   key={item.id}
                   onClick={(e) => handleItemClick(item, e)}
-                  className={`group relative flex flex-col items-center p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700/50 cursor-pointer transition-all ${
+                  className={`group relative flex flex-col items-center p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700/50 cursor-pointer transition-all min-w-0 ${
                     selectedItems.has(item.id) ? 'bg-primary-50 dark:bg-primary-900/20 ring-2 ring-primary-500' : ''
                   }`}
                 >
-                  <div className="flex flex-col items-center gap-2 mt-2">
-                    <FileIcon mimeType={item.mime_type || ''} size="lg" />
-                    <span className="text-sm font-medium text-gray-900 dark:text-gray-100 text-center line-clamp-2">{item.name}</span>
+                  <div className="flex flex-col items-center gap-2 mt-2 min-w-0 w-full">
+                    <FileIcon mimeType={item.mime_type || ''} size="lg" className="flex-shrink-0" />
+                    <span className="text-sm font-medium text-gray-900 dark:text-gray-100 text-center line-clamp-2 break-all w-full">{item.name}</span>
                     <span className="text-xs text-gray-500 dark:text-gray-400">{formatSize(item.size)}</span>
                   </div>
                 </div>
