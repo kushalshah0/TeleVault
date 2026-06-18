@@ -498,7 +498,7 @@ export default function HomePage() {
                   ))}
                 </div>
               </div>
-              <div className="p-5 h-[320px] flex flex-col">
+              <div className={`p-5 flex flex-col ${(mode === 'upload' && uploadState === 'idle' && uploadFiles.length > 0) || (mode === 'download' && shareInfo && !claimLoading) ? 'h-[320px] overflow-y-auto scrollbar-thin scroll-smooth' : 'h-[320px]'}`}>
                 {mode === 'upload' ? (
                   <>
                     {uploadState === 'done' ? (
