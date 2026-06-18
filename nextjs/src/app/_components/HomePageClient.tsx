@@ -8,7 +8,7 @@ import {
   Download, X, Clock, FileText, Shield, Zap, ArrowRight,
   ChevronRight, Upload, Copy, Check, Lock, 
   Image, Video, FileArchive, FileAudio, FileCode, FileType,
-  Eye, Hash, KeyRound, Link2, AlertCircle, Hourglass, Globe,
+  Eye, Hash, KeyRound, Link2, Hourglass, Globe,
 } from 'lucide-react'
 import FilePreview from '@/components/FilePreview'
 import Link from 'next/link'
@@ -367,7 +367,7 @@ export default function HomePage() {
       const res = await fetch(`/api/share/${claimCode.trim()}`)
       if (!res.ok) {
         if (res.status === 410) setClaimError('This share has expired')
-        else if (res.status === 404) setClaimError('Share not found')
+        else if (res.status === 404) { setClaimError('Invalid code'); setTimeout(() => setClaimError(''), 3000) }
         else if (res.status === 403) { const d = await res.json(); setClaimError(d.error || 'Download limit reached') }
         else { const d = await res.json(); setClaimError(d.error || 'Failed to load') }
         setClaimLoading(false)
@@ -639,13 +639,18 @@ export default function HomePage() {
                           <p className="text-xs text-muted-foreground mt-1">Enter the 6-character code to receive files</p>
                         </div>
                         <div className="relative w-full max-w-[260px]">
+                          {claimError && (
+                            <p className="absolute -top-2.5 left-3 text-[11px] text-destructive font-medium bg-background px-1">{claimError}</p>
+                          )}
                           <input
                             type="text"
                             value={claimCode}
-                            onChange={(e) => setClaimCode(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 6))}
+                            onChange={(e) => { setClaimCode(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 6)); setClaimError('') }}
                             onKeyDown={(e) => e.key === 'Enter' && claimCode.length === 6 && fetchShareInfo()}
                             placeholder="ABC123"
-                            className="w-full h-11 px-3 rounded-xl border border-input bg-background text-sm font-mono font-semibold text-foreground placeholder:text-muted-foreground/60 placeholder:text-center placeholder:font-normal placeholder:font-sans tracking-[0.3em] text-center uppercase focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:border-primary/50 transition-all"
+                            className={`w-full h-11 px-3 rounded-xl border bg-background text-sm font-mono font-semibold text-foreground placeholder:text-muted-foreground/60 placeholder:text-center placeholder:font-normal placeholder:font-sans tracking-[0.3em] text-center uppercase focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring transition-all ${
+                              claimError ? 'border-destructive ring-1 ring-destructive/30' : 'border-input'
+                            }`}
                           />
                         </div>
                         <button
@@ -661,18 +666,11 @@ export default function HomePage() {
                     )}
 
                     {claimLoading && (
-                      <div className="flex justify-center py-8">
-                        <div className="flex flex-col items-center gap-2">
-                          <Loader size="md" />
-                          <p className="text-xs text-muted-foreground">Loading...</p>
+                      <div className="flex-1 flex items-center justify-center">
+                        <div className="flex flex-col items-center gap-3">
+                          <Loader size="lg" />
+                          <p className="text-sm text-muted-foreground">Loading...</p>
                         </div>
-                      </div>
-                    )}
-
-                    {claimError && !shareInfo && (
-                      <div className="flex items-start gap-2 p-2.5 rounded-lg bg-destructive/10 border border-destructive/20">
-                        <AlertCircle className="w-3.5 h-3.5 text-destructive mt-0.5 flex-shrink-0" />
-                        <p className="text-xs text-destructive">{claimError}</p>
                       </div>
                     )}
 
@@ -836,7 +834,7 @@ export default function HomePage() {
                     <p className="text-sm text-muted-foreground">No files uploaded yet</p>
                   </div>
                 ) : (
-                  files.slice(0, 8).map((file) => (
+                  files.slice(0, 7).map((file) => (
                     <div
                       key={file.id}
                       onClick={(e) => handleRowClick(file, e)}

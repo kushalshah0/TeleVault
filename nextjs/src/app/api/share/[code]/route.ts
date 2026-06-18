@@ -18,7 +18,7 @@ export async function GET(
     })
 
     if (!uploadCode) {
-      return NextResponse.json({ error: 'Share not found' }, { status: 404 })
+      return NextResponse.json({ error: 'Invalid code' }, { status: 404 })
     }
 
     if (uploadCode.status !== 'active') {
