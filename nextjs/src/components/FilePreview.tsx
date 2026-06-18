@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { Modal, Button } from './ui';
 import { Loader } from './ModernLoader';
 import FileIcon from './ui/FileIcon';
+import { AlertCircle, RefreshCw, Download, X } from 'lucide-react';
 import './FilePreview.css';
 
 interface FilePreviewProps {
@@ -116,11 +117,7 @@ function FilePreview({ file, onClose, onDownload }: FilePreviewProps) {
               onClick={handleDownload}
               className="hidden sm:flex items-center gap-2"
             >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
-                <path d="M21 15V19C21 19.5304 20.7893 20.0391 20.4142 20.4142C20.0391 20.7893 19.5304 21 19 21H5C4.46957 21 3.96086 20.7893 3.58579 20.4142C3.21071 20.0391 3 19.5304 3 19V15" />
-                <path d="M7 10L12 15L17 10" />
-                <path d="M12 15V3" />
-              </svg>
+              <Download className="w-4 h-4" />
               Download
             </Button>
             <button
@@ -128,9 +125,7 @@ function FilePreview({ file, onClose, onDownload }: FilePreviewProps) {
               className="p-1.5 hover:bg-accent rounded-lg transition-colors"
               aria-label="Close"
             >
-              <svg className="w-5 h-5 text-muted-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
+              <X className="w-5 h-5 text-muted-foreground" />
             </button>
           </div>
         </div>
@@ -142,11 +137,7 @@ function FilePreview({ file, onClose, onDownload }: FilePreviewProps) {
             onClick={handleDownload}
             className="w-full flex items-center justify-center gap-2"
           >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
-              <path d="M21 15V19C21 19.5304 20.7893 20.0391 20.4142 20.4142C20.0391 20.7893 19.5304 21 19 21H5C4.46957 21 3.96086 20.7893 3.58579 20.4142C3.21071 20.0391 3 19.5304 3 19V15" />
-              <path d="M7 10L12 15L17 10" />
-              <path d="M12 15V3" />
-            </svg>
+            <Download className="w-4 h-4" />
             Download
           </Button>
         </div>
@@ -156,15 +147,39 @@ function FilePreview({ file, onClose, onDownload }: FilePreviewProps) {
           {loading && (
             <div className="flex flex-col items-center justify-center py-16 gap-4">
               <Loader size="lg" />
-              <p className="text-gray-600 dark:text-gray-400">Loading preview...</p>
+              <p className="text-muted-foreground">Loading preview...</p>
             </div>
           )}
 
           {error && (
-            <div className="flex flex-col items-center justify-center py-16">
-              <div className="text-6xl mb-4">❌</div>
-              <p className="text-red-600 dark:text-red-400 mb-4">{error}</p>
-              <Button onClick={handleDownload}>Download File Instead</Button>
+            <div className="flex flex-col items-center justify-center py-16 px-4">
+              <div className="w-14 h-14 rounded-2xl bg-destructive/10 flex items-center justify-center mb-4">
+                <AlertCircle className="w-7 h-7 text-destructive" />
+              </div>
+              <p className="text-foreground font-medium mb-1">Failed to load preview</p>
+              <p className="text-sm text-muted-foreground text-center mb-6 max-w-xs">
+                The file could not be downloaded for preview. Try downloading it directly instead.
+              </p>
+              <div className="flex items-center gap-3">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={loadPreview}
+                  className="flex items-center gap-2"
+                >
+                  <RefreshCw className="w-4 h-4" />
+                  Retry
+                </Button>
+                <Button
+                  variant="primary"
+                  size="sm"
+                  onClick={handleDownload}
+                  className="flex items-center gap-2"
+                >
+                  <Download className="w-4 h-4" />
+                  Download
+                </Button>
+              </div>
             </div>
           )}
 
@@ -240,17 +255,23 @@ function FilePreview({ file, onClose, onDownload }: FilePreviewProps) {
           )}
 
           {!loading && !error && !canPreview && (
-            <div className="flex flex-col items-center justify-center py-16">
-              <div className="mb-4">
-                <FileIcon mimeType={mimeType} size="xl" />
+            <div className="flex flex-col items-center justify-center py-16 px-4">
+              <div className="w-14 h-14 rounded-2xl bg-muted flex items-center justify-center mb-4">
+                <FileIcon mimeType={mimeType} size="md" />
               </div>
-              <h4 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">
-                Preview not available
-              </h4>
-              <p className="text-gray-600 dark:text-gray-400 mb-6">
-                This file type cannot be previewed in the browser.
+              <p className="text-foreground font-medium mb-1">Preview not available</p>
+              <p className="text-sm text-muted-foreground text-center mb-6 max-w-xs">
+                This file type cannot be previewed in the browser. Download the file to view it.
               </p>
-              <Button onClick={handleDownload}>Download to View</Button>
+              <Button
+                variant="primary"
+                size="sm"
+                onClick={handleDownload}
+                className="flex items-center gap-2"
+              >
+                <Download className="w-4 h-4" />
+                Download
+              </Button>
             </div>
           )}
         </div>
