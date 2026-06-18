@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma/db'
+import { cleanupExpiredShares } from '@/lib/share-cleanup'
 
 export async function GET(
   _request: NextRequest,
@@ -7,6 +8,8 @@ export async function GET(
 ) {
   try {
     const { code } = await params
+
+    await cleanupExpiredShares()
 
     const uploadCode = await prisma.upload_codes.findUnique({
       where: { code },
@@ -27,10 +30,6 @@ export async function GET(
 
     const now = new Date()
     if (uploadCode.expires_at && now > uploadCode.expires_at) {
-      await prisma.upload_codes.update({
-        where: { id: uploadCode.id },
-        data: { status: 'expired' }
-      })
       return NextResponse.json({ error: 'Share has expired' }, { status: 410 })
     }
 

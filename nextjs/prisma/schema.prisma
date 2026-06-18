@@ -217,6 +217,7 @@ model code_file_chunks {
   code_file_id             Int
   chunk_index              Int
   telegram_file_id         String
+  telegram_message_id      BigInt?
   telegram_bot_token_index Int
   code_file                code_files @relation(fields: [code_file_id], references: [id], onDelete: Cascade)
 

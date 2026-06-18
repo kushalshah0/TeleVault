@@ -8,7 +8,7 @@ import {
   Download, X, Clock, FileText, Shield, Zap, ArrowRight,
   ChevronRight, Upload, Copy, Check, Lock, 
   Image, Video, FileArchive, FileAudio, FileCode, FileType,
-  Eye, Hash, KeyRound, Link2, Hourglass, Globe,
+  Eye, KeyRound, Link2, Hourglass, Globe,
 } from 'lucide-react'
 import FilePreview from '@/components/FilePreview'
 import Link from 'next/link'
@@ -93,7 +93,8 @@ function formatExpiresIn(dateString: string | null): string {
   const diffMins = Math.floor(diffMs / 60000)
   const diffHours = Math.floor(diffMs / 3600000)
   const diffDays = Math.floor(diffMs / 86400000)
-  if (diffMins < 60) return `${diffMins} min`
+  const diffSecs = Math.floor((diffMs % 60000) / 1000)
+  if (diffMins < 60) return `${diffMins} min ${diffSecs} sec`
   if (diffHours < 24) return `${diffHours} hr ${diffMins % 60} min`
   return `${diffDays} day${diffDays > 1 ? 's' : ''} ${diffHours % 24} hr`
 }
@@ -186,6 +187,13 @@ export default function HomePage() {
   const [claimError, setClaimError] = useState('')
   const [claimPassword, setClaimPassword] = useState('')
   const [downloading, setDownloading] = useState<number | null>(null)
+  const [tick, setTick] = useState(0)
+
+  useEffect(() => {
+    if (!shareInfo) return
+    const id = setInterval(() => setTick(t => t + 1), 1000)
+    return () => clearInterval(id)
+  }, [shareInfo])
 
   useEffect(() => {
     if (files.length === 0) fetchFiles({ limit: 7 })
@@ -522,15 +530,33 @@ export default function HomePage() {
                         </button>
                       </div>
                     ) : uploadState === 'uploading' ? (
-                      <div className="flex-1 flex flex-col justify-center">
-                        <div className="flex items-center gap-2.5 mb-4">
+                      <div className="flex-1 flex flex-col min-h-0">
+                        <div className="flex items-center gap-2.5 mb-3">
                           <div className="animate-spin w-4 h-4 border-2 border-primary border-t-transparent rounded-full" />
-                          <span className="text-sm font-medium text-foreground">Uploading...</span>
+                          <span className="text-sm font-medium text-foreground">Uploading</span>
+                          <span className="text-xs text-muted-foreground ml-auto">{progress.current} / {progress.total} chunks</span>
                         </div>
-                        <div className="h-2.5 bg-muted/50 rounded-full overflow-hidden border border-border/30">
+                        {uploadFiles.length > 0 && (
+                          <div className="flex-1 min-h-0 overflow-y-auto space-y-1 mb-3 scrollbar-thin">
+                            {uploadFiles.map((sf) => {
+                              const mime = sf.file.type || null
+                              return (
+                                <div key={sf.id} className="flex items-center gap-2.5 px-3 py-2 rounded-lg bg-accent/20 border border-border/30">
+                                  <div className={`w-7 h-7 rounded-lg ${typeBg(mime)} flex items-center justify-center flex-shrink-0`}>
+                                    {getFileIcon(mime)}
+                                  </div>
+                                  <div className="flex-1 min-w-0">
+                                    <p className="text-xs font-medium text-foreground truncate leading-snug">{sf.file.name}</p>
+                                    <p className="text-[11px] text-muted-foreground">{formatSize(sf.file.size)}</p>
+                                  </div>
+                                </div>
+                              )
+                            })}
+                          </div>
+                        )}
+                        <div className="h-2 bg-muted/50 rounded-full overflow-hidden border border-border/30 flex-shrink-0">
                           <div className="h-full bg-primary rounded-full transition-all duration-500 ease-out" style={{ width: `${(progress.current / progress.total) * 100}%` }} />
                         </div>
-                        <p className="text-xs text-muted-foreground mt-2">{progress.current} / {progress.total} chunks</p>
                       </div>
                     ) : (
                       <>
@@ -676,9 +702,20 @@ export default function HomePage() {
 
                     {shareInfo && !claimLoading && (
                       <>
-                        <div className="flex items-center gap-2 mb-3 px-3 py-2.5 rounded-lg bg-primary/[0.04] border border-primary/10">
-                          <Hash className="w-3.5 h-3.5 text-primary" />
-                          <span className="text-sm font-mono font-semibold text-foreground tracking-wider">{claimCode}</span>
+                        <div className="flex items-center justify-between mb-3">
+                          <button onClick={() => { setShareInfo(null); setClaimError('') }} className="text-xs text-muted-foreground hover:text-foreground transition-colors font-medium flex items-center gap-1">
+                            ← Back
+                          </button>
+                          <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
+                            <span className="flex items-center gap-1 bg-muted/50 px-2 py-0.5 rounded-md border border-border/30">
+                              <Download className="w-3 h-3" />
+                              {shareInfo.download_count}{shareInfo.max_downloads ? ` / ${shareInfo.max_downloads}` : ''}
+                            </span>
+                            <span className="flex items-center gap-1 bg-muted/50 px-2 py-0.5 rounded-md border border-border/30">
+                              <Hourglass className="w-3 h-3" />
+                              {formatExpiresIn(shareInfo.expires_at)}
+                            </span>
+                          </div>
                         </div>
 
                         {shareInfo.has_password && (
@@ -707,43 +744,26 @@ export default function HomePage() {
                               <button
                                 onClick={() => handleClaimDownload(file.id)}
                                 disabled={downloading === file.id || isExpired || limitReached || (shareInfo.has_password && !claimPassword)}
-                                className="h-7 px-2.5 rounded-lg bg-primary text-primary-foreground text-[11px] font-medium hover:bg-primary/90 disabled:opacity-50 disabled:pointer-events-none transition-all flex items-center gap-1 flex-shrink-0 shadow-sm shadow-primary/20"
+                                className="h-7 w-7 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50 disabled:pointer-events-none transition-all flex items-center justify-center flex-shrink-0 shadow-sm shadow-primary/20"
                               >
                                 {downloading === file.id ? (
                                   <div className="animate-spin w-3 h-3 border-2 border-current border-t-transparent rounded-full" />
                                 ) : (
-                                  <Download className="w-3 h-3" />
+                                  <Download className="w-3.5 h-3.5" />
                                 )}
-                                Get
                               </button>
                             </div>
                           ))}
                         </div>
 
-                        <div className="flex items-center justify-between mt-3 pt-3 border-t border-border/50">
-                          <button onClick={() => { setShareInfo(null); setClaimError('') }} className="text-xs text-muted-foreground hover:text-foreground transition-colors font-medium">
-                            ← New code
-                          </button>
-                          <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
-                            <span className="flex items-center gap-1 bg-muted/50 px-2 py-0.5 rounded-md border border-border/30">
-                              <Download className="w-3 h-3" />
-                              {shareInfo.download_count}{shareInfo.max_downloads ? ` / ${shareInfo.max_downloads}` : ''}
-                            </span>
-                            <span className="flex items-center gap-1 bg-muted/50 px-2 py-0.5 rounded-md border border-border/30">
-                              <Hourglass className="w-3 h-3" />
-                              {formatExpiresIn(shareInfo.expires_at)}
-                            </span>
-                          </div>
-                        </div>
-
                         {isExpired && (
-                          <div className="flex items-center gap-1.5 mt-2 pt-2 border-t border-destructive/20 text-xs text-destructive font-medium">
+                          <div className="flex items-center gap-1.5 mt-3 pt-3 border-t border-destructive/20 text-xs text-destructive font-medium">
                             <Hourglass className="w-3 h-3" />
                             This share has expired
                           </div>
                         )}
                         {limitReached && !isExpired && (
-                          <div className="flex items-center gap-1.5 mt-2 pt-2 border-t border-border/50 text-xs text-muted-foreground font-medium">
+                          <div className="flex items-center gap-1.5 mt-3 pt-3 border-t border-border/50 text-xs text-muted-foreground font-medium">
                             <Download className="w-3 h-3" />
                             Download limit reached
                           </div>

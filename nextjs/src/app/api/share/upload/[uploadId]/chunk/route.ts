@@ -87,6 +87,7 @@ export async function POST(
         code_file_id: codeFile.id,
         chunk_index: chunkIndex,
         telegram_file_id: result.fileId,
+        telegram_message_id: result.messageId,
         telegram_bot_token_index: result.botIndex
       }
     })

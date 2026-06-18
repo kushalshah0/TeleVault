@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma/db'
+import { cleanupExpiredShares } from '@/lib/share-cleanup'
 import { downloadChunkFromTelegram } from '@/lib/telegram'
 
 export async function GET(
@@ -13,6 +14,8 @@ export async function GET(
       return NextResponse.json({ error: 'Invalid file ID' }, { status: 400 })
     }
 
+    await cleanupExpiredShares()
+
     const uploadCode = await prisma.upload_codes.findUnique({ where: { code } })
     if (!uploadCode || uploadCode.status !== 'active') {
       return NextResponse.json({ error: 'Share not found' }, { status: 404 })
@@ -20,10 +23,6 @@ export async function GET(
 
     const now = new Date()
     if (uploadCode.expires_at && now > uploadCode.expires_at) {
-      await prisma.upload_codes.update({
-        where: { id: uploadCode.id },
-        data: { status: 'expired' }
-      })
       return NextResponse.json({ error: 'Share has expired' }, { status: 410 })
     }
 
