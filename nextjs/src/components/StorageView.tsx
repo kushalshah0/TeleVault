@@ -660,7 +660,7 @@ function StorageView({ onFileOperation, searchQuery, searchTrigger, onClearSearc
       // Add Rename option (only for owner, admin, editor)
       if (['OWNER', 'ADMIN', 'EDITOR'].includes(userRole)) {
         menuItems.push(
-          { icon: <Pencil className="w-4 h-4" />, label: 'Rename', onClick: () => showRenameDialog(item, 'file') }
+          { icon: <Pencil className="w-4 h-4" />, label: 'Edit', onClick: () => showRenameDialog(item, 'file') }
         );
       }
 
@@ -682,7 +682,7 @@ function StorageView({ onFileOperation, searchQuery, searchTrigger, onClearSearc
       // Add Rename, Open, and Delete options
       if (['OWNER', 'ADMIN', 'EDITOR'].includes(userRole)) {
         menuItems.push(
-          { icon: <Pencil className="w-4 h-4" />, label: 'Rename', onClick: () => showRenameDialog(item, 'folder') },
+          { icon: <Pencil className="w-4 h-4" />, label: 'Edit', onClick: () => showRenameDialog(item, 'folder') },
           { icon: <FolderOpen className="w-4 h-4" />, label: 'Open', onClick: () => handleFolderOpen(item) },
           { divider: true },
           { icon: <Trash2 className="w-4 h-4" />, label: 'Delete', onClick: () => confirmFolderDelete(item.id, item.name), danger: true }
