@@ -105,12 +105,14 @@ export async function PATCH(
       )
     }
 
-    // Update file name
+    // Update file name and/or public status
+    const updateData: any = {}
+    if (body.name) updateData.name = body.name
+    if (body.is_public !== undefined) updateData.is_public = body.is_public
+
     const updatedFile = await prisma.files.update({
       where: { id: fileId },
-      data: {
-        name: body.name || file.name
-      }
+      data: updateData
     })
 
     // Convert BigInt to Number for JSON serialization
@@ -123,12 +125,17 @@ export async function PATCH(
     }
 
     // Log activity (async, don't wait)
+    const activityType = body.is_public !== undefined ? 'FILE_UPLOAD' : 'FILE_RENAME'
+    const activityDesc = body.is_public !== undefined
+      ? `Updated visibility of "${updatedFile.name}"`
+      : `Renamed file to "${updatedFile.name}"`
+
     prisma.activities.create({
       data: {
         user_id: user.userId,
         username: user.username,
-        activity_type: 'FILE_RENAME',
-        description: `Renamed file to "${updatedFile.name}"`,
+        activity_type: activityType,
+        description: activityDesc,
         storage_id: file.storages.id,
         storage_name: file.storages.name,
         file_id: updatedFile.id,
