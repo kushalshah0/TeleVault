@@ -53,6 +53,7 @@ export async function POST(
     const mimeType = formData.get('mimeType') as string | null
     const folderId = formData.get('folderId') ? parseInt(formData.get('folderId') as string) : null
     const fileId = formData.get('fileId') ? parseInt(formData.get('fileId') as string) : null
+    const isPublic = formData.get('isPublic') === 'true'
 
     // Validate required fields
     if (!chunk || chunkIndex === undefined || !totalChunks || !fileName || !fileSize) {
@@ -84,6 +85,7 @@ export async function POST(
           mime_type: mimeType || chunk.type || null,
           storage_id: storageId,
           folder_id: folderId,
+          is_public: isPublic,
         }
       })
 

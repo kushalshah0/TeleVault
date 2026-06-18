@@ -19,6 +19,7 @@ export interface UploadProgress {
 export interface UploadOptions {
   storageId: number
   folderId?: number
+  isPublic?: boolean
   onProgress?: (progress: UploadProgress) => void
   onComplete?: (fileId: number) => void
   onError?: (error: Error) => void
@@ -36,7 +37,7 @@ export function useFileUpload() {
     file: File,
     options: UploadOptions
   ): Promise<number> => {
-    const { storageId, folderId, onProgress, onComplete, onError } = options
+    const { storageId, folderId, isPublic, onProgress, onComplete, onError } = options
 
     setUploading(true)
     const controller = new AbortController()
@@ -62,6 +63,7 @@ export function useFileUpload() {
         formData.append('mimeType', file.type)
         if (folderId) formData.append('folderId', folderId.toString())
         if (fileId) formData.append('fileId', fileId.toString())
+        if (index === 0 && isPublic) formData.append('isPublic', 'true')
 
         // Get auth token (check both localStorage and sessionStorage)
         let token = localStorage.getItem('accessToken') || sessionStorage.getItem('accessToken')
