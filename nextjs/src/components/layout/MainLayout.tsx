@@ -77,12 +77,15 @@ function MainLayout({
         />
 
         {/* Page Content */}
-        <main className="flex-1 overflow-y-auto bg-background">
-          <div className="container mx-auto px-4 sm:px-6 py-4 sm:py-6 max-w-7xl">
+        <main className="flex-1 flex flex-col min-h-0 bg-background">
+          <div className="flex-1 overflow-y-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
             {isValidElement(children) && (children.type as any)?.name === 'Dashboard'
               ? cloneElement(children as any, { storages, onRefresh: onRefreshStorages })
               : children
             }
+          </div>
+          <div className="border-t border-border px-4 sm:px-6 lg:px-8 py-3 text-center text-xs text-muted-foreground flex-shrink-0">
+            &copy; {new Date().getFullYear()} TeleVault
           </div>
         </main>
       </div>
