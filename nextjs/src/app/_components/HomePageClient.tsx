@@ -187,6 +187,9 @@ export default function HomePage() {
   const [claimError, setClaimError] = useState('')
   const [claimPassword, setClaimPassword] = useState('')
   const [downloading, setDownloading] = useState<number | null>(null)
+  const [passwordVerified, setPasswordVerified] = useState(false)
+  const [claimPasswordError, setClaimPasswordError] = useState('')
+  const [claimPasswordLoading, setClaimPasswordLoading] = useState(false)
   const [tick, setTick] = useState(0)
 
   useEffect(() => {
@@ -415,6 +418,29 @@ export default function HomePage() {
     } catch (err) {
       setClaimError(err instanceof Error ? err.message : 'Download failed')
       setDownloading(null)
+    }
+  }
+
+  const verifyPassword = async () => {
+    if (!claimPassword) { setClaimPasswordError('Password required'); return }
+    setClaimPasswordError('')
+    setClaimPasswordLoading(true)
+    try {
+      const res = await fetch(`/api/share/${claimCode.trim()}/verify`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password: claimPassword })
+      })
+      const data = await res.json()
+      if (data.valid) {
+        setPasswordVerified(true)
+      } else {
+        setClaimPasswordError(data.error || 'Incorrect password')
+      }
+    } catch {
+      setClaimPasswordError('Verification failed')
+    } finally {
+      setClaimPasswordLoading(false)
     }
   }
 
@@ -702,71 +728,112 @@ export default function HomePage() {
 
                     {shareInfo && !claimLoading && (
                       <>
-                        <div className="flex items-center justify-between mb-3">
-                          <button onClick={() => { setShareInfo(null); setClaimError('') }} className="text-xs text-muted-foreground hover:text-foreground transition-colors font-medium flex items-center gap-1">
-                            ← Back
-                          </button>
-                          <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
-                            <span className="flex items-center gap-1 bg-muted/50 px-2 py-0.5 rounded-md border border-border/30">
-                              <Download className="w-3 h-3" />
-                              {shareInfo.download_count}{shareInfo.max_downloads ? ` / ${shareInfo.max_downloads}` : ''}
-                            </span>
-                            <span className="flex items-center gap-1 bg-muted/50 px-2 py-0.5 rounded-md border border-border/30">
-                              <Hourglass className="w-3 h-3" />
-                              {formatExpiresIn(shareInfo.expires_at)}
-                            </span>
-                          </div>
-                        </div>
-
-                        {shareInfo.has_password && (
-                          <div className="flex items-center gap-2 mb-3">
-                            <KeyRound className="w-3.5 h-3.5 text-amber-500 flex-shrink-0" />
-                            <input
-                              type="password"
-                              value={claimPassword}
-                              onChange={(e) => setClaimPassword(e.target.value)}
-                              placeholder="Password required"
-                              className="flex-1 h-9 px-2.5 rounded-lg border border-input bg-background text-xs text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring transition-all"
-                            />
-                          </div>
-                        )}
-
-                        <div className="space-y-1">
-                          {shareInfo.files.map((file) => (
-                            <div key={file.id} className="flex items-center gap-2.5 px-3 py-2 rounded-lg hover:bg-accent/30 transition-colors group border border-transparent hover:border-border/40">
-                              <div className={`w-7 h-7 rounded-lg ${typeBg(file.mime_type)} flex items-center justify-center flex-shrink-0`}>
-                                {getFileIcon(file.mime_type)}
-                              </div>
-                              <div className="flex-1 min-w-0">
-                                <p className="text-xs font-medium text-foreground truncate leading-snug">{file.name}</p>
-                                <p className="text-[11px] text-muted-foreground">{formatSize(file.size)}</p>
-                              </div>
-                              <button
-                                onClick={() => handleClaimDownload(file.id)}
-                                disabled={downloading === file.id || isExpired || limitReached || (shareInfo.has_password && !claimPassword)}
-                                className="h-7 w-7 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50 disabled:pointer-events-none transition-all flex items-center justify-center flex-shrink-0 shadow-sm shadow-primary/20"
-                              >
-                                {downloading === file.id ? (
-                                  <div className="animate-spin w-3 h-3 border-2 border-current border-t-transparent rounded-full" />
-                                ) : (
-                                  <Download className="w-3.5 h-3.5" />
-                                )}
+                        {shareInfo.has_password && !passwordVerified ? (
+                          <div className="flex-1 flex flex-col min-h-0">
+                            <div className="flex items-center justify-between mb-4 flex-shrink-0">
+                              <button onClick={() => { setShareInfo(null); setClaimError('') }} className="text-xs text-muted-foreground hover:text-foreground transition-colors font-medium flex items-center gap-1 py-0.5">
+                                ← Back
                               </button>
+                              <span className="inline-flex items-center gap-1 bg-primary/10 text-primary text-[11px] font-semibold px-2 py-0.5 rounded-md border border-primary/15 font-mono tracking-wider">
+                                {claimCode}
+                              </span>
                             </div>
-                          ))}
-                        </div>
+                            <div className="flex-1 flex flex-col items-center justify-center">
+                              <div className="w-12 h-12 rounded-2xl bg-amber-500/10 flex items-center justify-center mb-5 ring-1 ring-amber-500/20">
+                                <KeyRound className="w-6 h-6 text-amber-500" />
+                              </div>
+                              <h3 className="text-sm font-semibold text-foreground mb-1">Password required</h3>
+                              <p className="text-xs text-muted-foreground mb-5 text-center">Enter the password to access files.</p>
+                              <div className="w-full max-w-[240px] space-y-3">
+                                <div className="relative">
+                                  <input
+                                    type="password"
+                                    value={claimPassword}
+                                    onChange={(e) => { setClaimPassword(e.target.value); setClaimPasswordError('') }}
+                                    onKeyDown={(e) => e.key === 'Enter' && verifyPassword()}
+                                    placeholder="Enter password"
+                                    className={`w-full h-10 px-4 rounded-xl border bg-background text-sm text-foreground placeholder:text-muted-foreground/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring transition-all ${
+                                      claimPasswordError ? 'border-destructive ring-1 ring-destructive/30' : 'border-input'
+                                    }`}
+                                  />
+                                  {claimPasswordError && (
+                                    <p className="absolute -top-5 left-0 text-[11px] text-destructive font-medium">{claimPasswordError}</p>
+                                  )}
+                                </div>
+                                <button
+                                  onClick={verifyPassword}
+                                  disabled={claimPasswordLoading}
+                                  className="w-full h-10 rounded-xl bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 disabled:opacity-60 disabled:pointer-events-none transition-all flex items-center justify-center gap-2 shadow-sm shadow-primary/20 active:scale-[0.98]"
+                                >
+                                  {claimPasswordLoading ? (
+                                    <div className="animate-spin w-4 h-4 border-2 border-current border-t-transparent rounded-full" />
+                                  ) : (
+                                    <KeyRound className="w-4 h-4" />
+                                  )}
+                                  {claimPasswordLoading ? 'Unlocking...' : 'Unlock'}
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        ) : (
+                          <>
+                            <div className="flex items-center justify-between mb-3 flex-shrink-0">
+                              <button onClick={() => { setShareInfo(null); setClaimError(''); setPasswordVerified(false); setClaimPassword(''); setClaimPasswordError('') }} className="text-xs text-muted-foreground hover:text-foreground transition-colors font-medium flex items-center gap-1 py-0.5">
+                                ← Back
+                              </button>
+                              <div className="flex items-center gap-1.5">
+                                <span className="inline-flex items-center gap-1 bg-primary/10 text-primary text-[11px] font-semibold px-2 py-0.5 rounded-md border border-primary/15 font-mono tracking-wider">
+                                  {claimCode}
+                                </span>
+                                <span className="flex items-center gap-1 bg-muted/50 px-2 py-0.5 rounded-md border border-border/30 text-[11px] text-muted-foreground">
+                                  <Download className="w-3 h-3" />
+                                  {shareInfo.download_count}{shareInfo.max_downloads ? ` / ${shareInfo.max_downloads}` : ''}
+                                </span>
+                                <span className="flex items-center gap-1 bg-muted/50 px-2 py-0.5 rounded-md border border-border/30 text-[11px] text-muted-foreground">
+                                  <Hourglass className="w-3 h-3" />
+                                  {formatExpiresIn(shareInfo.expires_at)}
+                                </span>
+                              </div>
+                            </div>
 
-                        {isExpired && (
-                          <div className="flex items-center gap-1.5 mt-3 pt-3 border-t border-destructive/20 text-xs text-destructive font-medium">
-                            <Hourglass className="w-3 h-3" />
-                            This share has expired
-                          </div>
-                        )}
-                        {limitReached && !isExpired && (
-                          <div className="flex items-center gap-1.5 mt-3 pt-3 border-t border-border/50 text-xs text-muted-foreground font-medium">
-                            <Download className="w-3 h-3" />
-                            Download limit reached
-                          </div>
+                            <div className="space-y-1">
+                              {shareInfo.files.map((file) => (
+                                <div key={file.id} className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-accent/40 transition-colors group border border-transparent hover:border-border/40">
+                                  <div className={`w-8 h-8 rounded-xl ${typeBg(file.mime_type)} flex items-center justify-center flex-shrink-0 shadow-sm`}>
+                                    {getFileIcon(file.mime_type)}
+                                  </div>
+                                  <div className="flex-1 min-w-0">
+                                    <p className="text-sm font-medium text-foreground truncate leading-snug">{file.name}</p>
+                                    <p className="text-[11px] text-muted-foreground mt-0.5">{formatSize(file.size)}</p>
+                                  </div>
+                                  <button
+                                    onClick={() => handleClaimDownload(file.id)}
+                                    disabled={downloading === file.id || isExpired || limitReached}
+                                    className="h-8 w-8 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-40 disabled:pointer-events-none transition-all flex items-center justify-center flex-shrink-0 shadow-sm shadow-primary/20 active:scale-95"
+                                  >
+                                    {downloading === file.id ? (
+                                      <div className="animate-spin w-3.5 h-3.5 border-2 border-current border-t-transparent rounded-full" />
+                                    ) : (
+                                      <Download className="w-4 h-4" />
+                                    )}
+                                  </button>
+                                </div>
+                              ))}
+                            </div>
+
+                            {isExpired && (
+                              <div className="flex items-center gap-1.5 mt-3 pt-3 border-t border-destructive/20 text-xs text-destructive font-medium flex-shrink-0">
+                                <Hourglass className="w-3 h-3" />
+                                This share has expired
+                              </div>
+                            )}
+                            {limitReached && !isExpired && (
+                              <div className="flex items-center gap-1.5 mt-3 pt-3 border-t border-border/50 text-xs text-muted-foreground font-medium flex-shrink-0">
+                                <Download className="w-3 h-3" />
+                                Download limit reached
+                              </div>
+                            )}
+                          </>
                         )}
                       </>
                     )}
