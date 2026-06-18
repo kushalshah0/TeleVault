@@ -7,7 +7,7 @@ import { Eye, Download, Share2, Pencil, Trash2, FolderOpen, CheckSquare, Square 
 import { storageAPI, folderAPI, fileAPI } from '@/utils/api-client';
 import { LoadingSkeleton, Spinner, Loader } from './ModernLoader';
 import FilePreview from './FilePreview';
-import { Button, Card, Modal, Input, EmptyState, Breadcrumbs, ContextMenu, FileIcon, Dropdown, ConfirmDialog, ViewModeToggle } from './ui';
+import { Button, Card, Modal, Input, EmptyState, Breadcrumbs, ContextMenu, FileIcon, Dropdown, ConfirmDialog, ViewModeToggle, EditFileModal } from './ui';
 import { BreadcrumbItem } from './ui/Breadcrumbs';
 import { useFileUpload } from '../hooks/useFileUpload';
 import { useContextMenu } from '../hooks/useContextMenu';
@@ -88,8 +88,6 @@ function StorageView({ onFileOperation, searchQuery, searchTrigger, onClearSearc
   const [creatingFolder, setCreatingFolder] = useState(false);
   const [showRenameModal, setShowRenameModal] = useState(false);
   const [renameItem, setRenameItem] = useState<ItemWithType | null>(null);
-  const [newName, setNewName] = useState('');
-  const [renaming, setRenaming] = useState(false);
 
   // Delete confirmation
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -550,81 +548,20 @@ function StorageView({ onFileOperation, searchQuery, searchTrigger, onClearSearc
     }
   };
 
-  const handleRename = async (e: FormEvent) => {
-    e.preventDefault();
-    if (!newName.trim() || !renameItem) return;
+  const handleSavedRename = useCallback(async () => {
+    clearSelection();
+    await refreshData();
+  }, [clearSelection]);
 
-    setRenaming(true);
-
-    try {
-      let finalName = newName.trim();
-
-      // For files, append the original extension
-      if (renameItem.type === 'file') {
-        const lastDotIndex = renameItem.name.lastIndexOf('.');
-        if (lastDotIndex > 0) {
-          const extension = renameItem.name.substring(lastDotIndex);
-          finalName = finalName + extension;
-        }
-      }
-
-      if (renameItem.type === 'file') {
-        await fileAPI.rename(storageId, renameItem.id, finalName);
-      } else {
-        await folderAPI.rename(storageId, renameItem.id, finalName);
-      }
-      
-      toast.success(`${renameItem.type === 'file' ? 'File' : 'Folder'} renamed successfully`);
-      setShowRenameModal(false);
-      setNewName('');
-      setRenameItem(null);
-      clearSelection();
-      await refreshData();
-    } catch (error) {
-      const err = error as any;
-      toast.error(err.message || err.response?.data?.detail || 'Failed to rename');
-    } finally {
-      setRenaming(false);
-    }
-  };
+  const handleEditModalClose = useCallback(() => {
+    setShowRenameModal(false);
+    setRenameItem(null);
+  }, []);
 
   const showRenameDialog = (item: any, type: 'folder' | 'file') => {
     const itemWithType = { ...item, type };
     setRenameItem(itemWithType as (Folder | FileType) & { type: 'folder' | 'file' });
-
-    // For files, extract name without extension
-    if (type === 'file') {
-      const lastDotIndex = item.name.lastIndexOf('.');
-      if (lastDotIndex > 0) {
-        // Has extension, show only name part
-        const nameWithoutExt = item.name.substring(0, lastDotIndex);
-        setNewName(nameWithoutExt);
-      } else {
-        // No extension, show full name
-        setNewName(item.name);
-      }
-    } else {
-      // Folders don't have extensions
-      setNewName(item.name);
-    }
-
     setShowRenameModal(true);
-  };
-
-  const getOriginalNameWithoutExtension = () => {
-    if (!renameItem) return '';
-
-    if (renameItem.type === 'file') {
-      const lastDotIndex = renameItem.name.lastIndexOf('.');
-      if (lastDotIndex > 0) {
-        return renameItem.name.substring(0, lastDotIndex);
-      }
-    }
-    return renameItem.name;
-  };
-
-  const hasNameChanged = () => {
-    return newName.trim() !== '' && newName.trim() !== getOriginalNameWithoutExtension();
   };
 
   const handleFolderOpen = useCallback((folder: any) => {
@@ -719,6 +656,13 @@ function StorageView({ onFileOperation, searchQuery, searchTrigger, onClearSearc
         { icon: <Download className="w-4 h-4" />, label: 'Download', onClick: () => handleFileDownload(item) },
         { icon: <Share2 className="w-4 h-4" />, label: 'Share', onClick: () => { setSharingItem({ id: item.id, name: item.name, type: 'file' }); setShowShareModal(true); } }
       );
+
+      // Add Rename option (only for owner, admin, editor)
+      if (['OWNER', 'ADMIN', 'EDITOR'].includes(userRole)) {
+        menuItems.push(
+          { icon: <Pencil className="w-4 h-4" />, label: 'Rename', onClick: () => showRenameDialog(item, 'file') }
+        );
+      }
 
       // Add Edit option for text files (only for owner, admin, editor)
       if (isTextFile(item) && ['OWNER', 'ADMIN', 'EDITOR'].includes(userRole)) {
@@ -1267,12 +1211,9 @@ function StorageView({ onFileOperation, searchQuery, searchTrigger, onClearSearc
                     onClick={() => showRenameDialog(selectedItems[0], selectedItems[0].type ?? 'file')}
                     className="p-2 hover:bg-primary-100 dark:hover:bg-primary-800 rounded-lg 
                       transition-colors text-gray-700 dark:text-gray-300"
-                    title="Rename"
+                    title="Edit"
                   >
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                        d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                    </svg>
+                    <Pencil className="w-5 h-5" />
                   </button>
                 )}
 
@@ -1387,7 +1328,7 @@ function StorageView({ onFileOperation, searchQuery, searchTrigger, onClearSearc
           }
         />
       ) : viewMode === 'grid' ? (
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 sm:gap-4" style={{ overflow: 'visible' }}>
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-7 gap-3 sm:gap-4" style={{ overflow: 'visible' }}>
           {displayFolders.map((folder) => (
             <Card
               key={`folder-${folder.id}`}
@@ -1643,78 +1584,15 @@ function StorageView({ onFileOperation, searchQuery, searchTrigger, onClearSearc
         </form>
       </Modal>
 
-      {/* Rename Modal */}
-      <Modal
+      {/* Edit File/Folder Modal */}
+      <EditFileModal
+        key={renameItem?.id ?? 'none'}
         isOpen={showRenameModal}
-        onClose={() => {
-          setShowRenameModal(false);
-          setRenameItem(null);
-          setNewName('');
-        }}
-        title={`Rename ${renameItem?.type === 'file' ? 'File' : 'Folder'}`}
-      >
-        <form onSubmit={handleRename} className="space-y-4">
-          {renameItem?.type === 'file' && renameItem.name.includes('.') ? (
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                File Name
-              </label>
-              <div className="flex gap-2">
-                <input
-                  type="text"
-                  value={newName}
-                  onChange={(e) => setNewName(e.target.value)}
-                  required
-                  autoFocus
-                  placeholder="Enter file name"
-                  className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 
-                    rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100
-                    focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                />
-                <input
-                  type="text"
-                  value={renameItem.name.substring(renameItem.name.lastIndexOf('.'))}
-                  disabled
-                  className="w-24 px-3 py-2 border border-gray-300 dark:border-gray-600 
-                    rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400
-                    cursor-not-allowed"
-                />
-              </div>
-            </div>
-          ) : (
-            <Input
-              label="Name"
-              placeholder="Enter name"
-              value={newName}
-              onChange={(e) => setNewName(e.target.value)}
-              required
-              autoFocus
-            />
-          )}
-
-          <div className="flex justify-end gap-3 mt-6">
-            <Button
-              variant="outline"
-              type="button"
-              onClick={() => {
-                setShowRenameModal(false);
-                setRenameItem(null);
-                setNewName('');
-              }}
-            >
-              Cancel
-            </Button>
-            <Button
-              variant="primary"
-              type="submit"
-              isLoading={renaming}
-              disabled={!hasNameChanged()}
-            >
-              {renaming ? 'Renaming...' : 'Rename'}
-            </Button>
-          </div>
-        </form>
-      </Modal>
+        onClose={handleEditModalClose}
+        renameItem={renameItem as any}
+        storageId={storageId}
+        onSaved={handleSavedRename}
+      />
 
       {/* File Preview Modal */}
       {previewFile && (
