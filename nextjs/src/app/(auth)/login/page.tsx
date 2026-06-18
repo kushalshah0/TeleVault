@@ -115,15 +115,15 @@ function LoginForm() {
 
   return (
     <div className="min-h-screen flex flex-col">
-      <header className="bg-background/95 backdrop-blur-lg border-b border-border sticky top-0 z-40">
-        <div className="flex items-center justify-between px-4 sm:px-6 py-3">
-          <div className="flex items-center gap-2">
-            <span className="text-2xl">☁️</span>
-            <h1 className="text-xl font-bold text-foreground">
-              TeleVault
-            </h1>
+      <header className="border-b border-border bg-background/80 backdrop-blur-xl sticky top-0 z-40">
+        <div className="px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between h-16 max-w-7xl mx-auto">
+            <a href="/" className="flex items-center gap-2.5">
+              <span className="text-2xl">☁️</span>
+              <span className="text-lg font-bold text-foreground tracking-tight">TeleVault</span>
+            </a>
+            <ThemeToggle />
           </div>
-          <ThemeToggle />
         </div>
       </header>
       <div className="flex-1 flex items-center justify-center px-4 py-8">
