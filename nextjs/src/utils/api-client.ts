@@ -355,6 +355,17 @@ export const fileAPI = {
     invalidateCache.storage(storageId)
     return result
   },
+
+  update: async (storageId: number, fileId: number, data: { name?: string; is_public?: boolean }) => {
+    const result = await apiRequest(`/api/files/${fileId}`, {
+      method: 'PATCH',
+      body: JSON.stringify(data),
+    })
+    // Invalidate file caches
+    invalidateCache.file(storageId, null)
+    invalidateCache.storage(storageId)
+    return result
+  },
   
   delete: async (storageId: number, fileId: number, folderId: number | null = null) => {
     const result = await apiRequest(`/api/files/${fileId}`, { method: 'DELETE' })
