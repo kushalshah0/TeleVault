@@ -89,6 +89,7 @@ model files {
   mime_type   String?
   storage_id  Int
   folder_id   Int?
+  is_public   Boolean       @default(false)
   created_at  DateTime      @default(now())
   file_chunks file_chunks[]
   folders     folders?      @relation(fields: [folder_id], references: [id])
