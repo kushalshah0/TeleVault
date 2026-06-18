@@ -183,6 +183,47 @@ model users {
   @@index([username])
 }
 
+model upload_codes {
+  id             Int         @id @default(autoincrement())
+  code           String?     @unique
+  status         String      @default("pending")
+  password_hash  String?
+  expires_at     DateTime?
+  max_downloads  Int?
+  download_count Int         @default(0)
+  total_size     BigInt      @default(0)
+  created_at     DateTime    @default(now())
+  files          code_files[]
+
+  @@index([code])
+  @@index([status])
+}
+
+model code_files {
+  id             Int              @id @default(autoincrement())
+  upload_code_id Int
+  name           String
+  mime_type      String?
+  size           BigInt
+  chunk_count    Int              @default(0)
+  upload_code    upload_codes     @relation(fields: [upload_code_id], references: [id], onDelete: Cascade)
+  chunks         code_file_chunks[]
+
+  @@index([upload_code_id])
+}
+
+model code_file_chunks {
+  id                       Int        @id @default(autoincrement())
+  code_file_id             Int
+  chunk_index              Int
+  telegram_file_id         String
+  telegram_bot_token_index Int
+  code_file                code_files @relation(fields: [code_file_id], references: [id], onDelete: Cascade)
+
+  @@index([code_file_id])
+  @@index([chunk_index])
+}
+
 enum ActivityType {
   LOGIN
   LOGOUT
