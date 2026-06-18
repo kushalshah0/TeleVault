@@ -144,13 +144,10 @@ export const EditFileModal = ({ isOpen, onClose, renameItem, storageId, onSaved 
 
         {renameItem?.type === 'file' && (
           <div className="flex items-center justify-between pt-2 border-t border-gray-200 dark:border-gray-700">
-            <div>
-              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+            <div className="flex items-center gap-3">
+              <label className="text-sm font-medium text-gray-700 dark:text-gray-300 whitespace-nowrap">
                 Make Public
               </label>
-              <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-                Visible on the landing page
-              </p>
             </div>
             <button
               type="button"
