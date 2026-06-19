@@ -274,3 +274,9 @@ enum userrole {
   EDITOR
   ADMIN
 }
+
+model cleanup_meta {
+  key        String   @id
+  value      String
+  updated_at DateTime @default(now()) @updatedAt
+}

@@ -2,8 +2,9 @@ import { prisma } from './prisma/db'
 import { deleteMessageFromTelegram } from './telegram'
 
 const STALE_UPLOAD_MS = 24 * 60 * 60 * 1000
+const CLEANUP_COOLDOWN_MS = 60 * 60 * 1000
 
-export async function cleanupExpiredShares(): Promise<void> {
+export async function cleanupExpiredShares({ force } = {}): Promise<void> {
   const channelId = process.env.TELEGRAM_TEMP_CHANNEL_ID
 
   if (!channelId) {
@@ -12,6 +13,14 @@ export async function cleanupExpiredShares(): Promise<void> {
   }
 
   const now = new Date()
+
+  if (!force) {
+    const lastRun = await prisma.cleanup_meta.findUnique({ where: { key: 'last_cleanup_at' } })
+    if (lastRun) {
+      const elapsed = now.getTime() - new Date(lastRun.value).getTime()
+      if (elapsed < CLEANUP_COOLDOWN_MS) return
+    }
+  }
 
   const expired = await prisma.upload_codes.findMany({
     where: {
@@ -27,7 +36,14 @@ export async function cleanupExpiredShares(): Promise<void> {
     },
   })
 
-  if (expired.length === 0) return
+  if (expired.length === 0) {
+    await prisma.cleanup_meta.upsert({
+      where: { key: 'last_cleanup_at' },
+      update: { value: now.toISOString() },
+      create: { key: 'last_cleanup_at', value: now.toISOString() },
+    })
+    return
+  }
 
   console.log(`[cleanup] cleaning ${expired.length} expired uploads`)
 
@@ -48,4 +64,10 @@ export async function cleanupExpiredShares(): Promise<void> {
     await prisma.upload_codes.delete({ where: { id: upload.id } })
     console.log(`[cleanup] deleted upload ${upload.id} (${upload.code})`)
   }
+
+  await prisma.cleanup_meta.upsert({
+    where: { key: 'last_cleanup_at' },
+    update: { value: now.toISOString() },
+    create: { key: 'last_cleanup_at', value: now.toISOString() },
+  })
 }

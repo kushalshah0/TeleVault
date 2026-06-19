@@ -2,6 +2,8 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 
 const mockFindMany = vi.fn()
 const mockDelete = vi.fn()
+const mockMetaFindUnique = vi.fn()
+const mockMetaUpsert = vi.fn()
 const mockDeleteMessage = vi.fn()
 
 vi.mock('@/lib/prisma/db', () => ({
@@ -9,6 +11,10 @@ vi.mock('@/lib/prisma/db', () => ({
     upload_codes: {
       findMany: mockFindMany,
       delete: mockDelete,
+    },
+    cleanup_meta: {
+      findUnique: mockMetaFindUnique,
+      upsert: mockMetaUpsert,
     },
   },
 }))
@@ -22,6 +28,8 @@ const { cleanupExpiredShares } = await import('../share-cleanup')
 beforeEach(() => {
   vi.clearAllMocks()
   delete process.env.TELEGRAM_TEMP_CHANNEL_ID
+  mockMetaFindUnique.mockResolvedValue(null)
+  mockMetaUpsert.mockResolvedValue({})
 })
 
 describe('cleanupExpiredShares', () => {
@@ -37,17 +45,45 @@ describe('cleanupExpiredShares', () => {
     warn.mockRestore()
   })
 
-  it('returns early when no expired uploads exist', async () => {
+  it('skips cleanup when last run was less than 1 hour ago', async () => {
     process.env.TELEGRAM_TEMP_CHANNEL_ID = '-1001234567890'
-    mockFindMany.mockResolvedValue([])
-    const log = vi.spyOn(console, 'log').mockImplementation(() => {})
+    mockMetaFindUnique.mockResolvedValue({
+      key: 'last_cleanup_at',
+      value: new Date().toISOString(),
+    })
 
     await cleanupExpiredShares()
 
-    expect(mockFindMany).toHaveBeenCalledOnce()
+    expect(mockFindMany).not.toHaveBeenCalled()
     expect(mockDelete).not.toHaveBeenCalled()
-    expect(mockDeleteMessage).not.toHaveBeenCalled()
+  })
+
+  it('runs cleanup when forced even if recently ran', async () => {
+    process.env.TELEGRAM_TEMP_CHANNEL_ID = '-1001234567890'
+    mockMetaFindUnique.mockResolvedValue({
+      key: 'last_cleanup_at',
+      value: new Date().toISOString(),
+    })
+    mockFindMany.mockResolvedValue([])
+    const log = vi.spyOn(console, 'log').mockImplementation(() => {})
+
+    await cleanupExpiredShares({ force: true })
+
+    expect(mockFindMany).toHaveBeenCalledOnce()
     log.mockRestore()
+  })
+
+  it('updates last_cleanup_at when no expired uploads exist', async () => {
+    process.env.TELEGRAM_TEMP_CHANNEL_ID = '-1001234567890'
+    mockFindMany.mockResolvedValue([])
+
+    await cleanupExpiredShares()
+
+    expect(mockMetaUpsert).toHaveBeenCalledWith({
+      where: { key: 'last_cleanup_at' },
+      update: expect.any(Object),
+      create: { key: 'last_cleanup_at', value: expect.any(String) },
+    })
   })
 
   it('deletes Telegram messages and DB records for expired active uploads', async () => {
@@ -73,11 +109,11 @@ describe('cleanupExpiredShares', () => {
 
     await cleanupExpiredShares()
 
-    expect(mockFindMany).toHaveBeenCalledOnce()
     expect(mockDelete).toHaveBeenCalledWith({ where: { id: 1 } })
     expect(mockDeleteMessage).toHaveBeenCalledTimes(2)
     expect(mockDeleteMessage).toHaveBeenCalledWith('-1001234567890', 500, 0)
     expect(mockDeleteMessage).toHaveBeenCalledWith('-1001234567890', 501, 1)
+    expect(mockMetaUpsert).toHaveBeenCalledOnce()
     log.mockRestore()
   })
 
@@ -99,13 +135,11 @@ describe('cleanupExpiredShares', () => {
     }
     mockFindMany.mockResolvedValue([upload])
     mockDelete.mockResolvedValue(upload)
-    const log = vi.spyOn(console, 'log').mockImplementation(() => {})
 
     await cleanupExpiredShares()
 
     expect(mockDeleteMessage).toHaveBeenCalledTimes(1)
     expect(mockDeleteMessage).toHaveBeenCalledWith('-1001234567890', 600, 1)
-    log.mockRestore()
   })
 
   it('cleans up stale pending uploads older than 24h', async () => {
@@ -125,14 +159,11 @@ describe('cleanupExpiredShares', () => {
     }
     mockFindMany.mockResolvedValue([oldPending])
     mockDelete.mockResolvedValue(oldPending)
-    const log = vi.spyOn(console, 'log').mockImplementation(() => {})
 
     await cleanupExpiredShares()
 
-    expect(mockFindMany).toHaveBeenCalledOnce()
     expect(mockDelete).toHaveBeenCalledWith({ where: { id: 3 } })
     expect(mockDeleteMessage).toHaveBeenCalledOnce()
-    log.mockRestore()
   })
 
   it('handles multiple uploads with multiple files', async () => {
@@ -158,7 +189,6 @@ describe('cleanupExpiredShares', () => {
     ]
     mockFindMany.mockResolvedValue(uploads)
     mockDelete.mockResolvedValue({})
-    const log = vi.spyOn(console, 'log').mockImplementation(() => {})
 
     await cleanupExpiredShares()
 
@@ -166,7 +196,6 @@ describe('cleanupExpiredShares', () => {
     expect(mockDeleteMessage).toHaveBeenCalledTimes(3)
     expect(mockDelete).toHaveBeenCalledWith({ where: { id: 4 } })
     expect(mockDelete).toHaveBeenCalledWith({ where: { id: 5 } })
-    log.mockRestore()
   })
 
   it('continues cleanup when Telegram deletion fails', async () => {
@@ -187,7 +216,6 @@ describe('cleanupExpiredShares', () => {
     mockFindMany.mockResolvedValue([upload])
     mockDeleteMessage.mockRejectedValue(new Error('Telegram API error'))
     mockDelete.mockResolvedValue(upload)
-    const log = vi.spyOn(console, 'log').mockImplementation(() => {})
     const err = vi.spyOn(console, 'error').mockImplementation(() => {})
 
     await cleanupExpiredShares()
@@ -195,14 +223,12 @@ describe('cleanupExpiredShares', () => {
     expect(mockDeleteMessage).toHaveBeenCalledOnce()
     expect(mockDelete).toHaveBeenCalledOnce()
     expect(err).toHaveBeenCalled()
-    log.mockRestore()
     err.mockRestore()
   })
 
   it('passes the correct query to findMany', async () => {
     process.env.TELEGRAM_TEMP_CHANNEL_ID = '-1001234567890'
     mockFindMany.mockResolvedValue([])
-    const log = vi.spyOn(console, 'log').mockImplementation(() => {})
 
     await cleanupExpiredShares()
 
@@ -215,6 +241,5 @@ describe('cleanupExpiredShares', () => {
     expect(query.include).toEqual({
       files: { include: { chunks: true } },
     })
-    log.mockRestore()
   })
 })
