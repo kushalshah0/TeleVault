@@ -4,7 +4,7 @@ import { deleteMessageFromTelegram } from './telegram'
 const STALE_UPLOAD_MS = 24 * 60 * 60 * 1000
 const CLEANUP_COOLDOWN_MS = 60 * 60 * 1000
 
-export async function cleanupExpiredShares({ force } = {}): Promise<void> {
+export async function cleanupExpiredShares({ force }: { force?: boolean } = {}): Promise<void> {
   const channelId = process.env.TELEGRAM_TEMP_CHANNEL_ID
 
   if (!channelId) {
