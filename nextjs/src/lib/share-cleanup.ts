@@ -1,26 +1,35 @@
 import { prisma } from './prisma/db'
 import { deleteMessageFromTelegram } from './telegram'
 
-const channelId = process.env.TELEGRAM_TEMP_CHANNEL_ID
+const STALE_UPLOAD_MS = 24 * 60 * 60 * 1000
 
 export async function cleanupExpiredShares(): Promise<void> {
-  if (!channelId) return
+  const channelId = process.env.TELEGRAM_TEMP_CHANNEL_ID
+
+  if (!channelId) {
+    console.warn('[cleanup] TELEGRAM_TEMP_CHANNEL_ID not configured — skipping')
+    return
+  }
+
+  const now = new Date()
 
   const expired = await prisma.upload_codes.findMany({
     where: {
-      status: 'active',
-      expires_at: { lte: new Date() }
+      OR: [
+        { status: 'active', expires_at: { lte: now } },
+        { status: 'pending', created_at: { lte: new Date(now.getTime() - STALE_UPLOAD_MS) } },
+      ],
     },
     include: {
       files: {
-        include: {
-          chunks: true
-        }
-      }
-    }
+        include: { chunks: true },
+      },
+    },
   })
 
   if (expired.length === 0) return
+
+  console.log(`[cleanup] cleaning ${expired.length} expired uploads`)
 
   for (const upload of expired) {
     const deletePromises = upload.files.flatMap(file =>
@@ -30,13 +39,13 @@ export async function cleanupExpiredShares(): Promise<void> {
           deleteMessageFromTelegram(
             channelId,
             Number(chunk.telegram_message_id),
-            chunk.telegram_bot_token_index
-          ).catch(() => {})
+            chunk.telegram_bot_token_index,
+          ).catch(err => console.error(`[cleanup] failed to delete telegram message ${chunk.telegram_message_id}:`, err))
         )
     )
 
     await Promise.allSettled(deletePromises)
-
     await prisma.upload_codes.delete({ where: { id: upload.id } })
+    console.log(`[cleanup] deleted upload ${upload.id} (${upload.code})`)
   }
 }
