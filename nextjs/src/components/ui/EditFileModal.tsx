@@ -76,7 +76,17 @@ export const EditFileModal = ({ isOpen, onClose, renameItem, storageId, onSaved 
         await folderAPI.rename(storageId, renameItem.id, finalName)
       }
 
-      toast.success(renameItem.type === 'file' ? 'File updated successfully' : 'Folder updated successfully')
+      toast.success(renameItem.type === 'file' ? 'File updated successfully' : 'Folder updated successfully', {
+        style: {
+          background: 'hsl(var(--card))',
+          color: 'hsl(var(--card-foreground))',
+          border: '1px solid hsl(var(--border))',
+        },
+        iconTheme: {
+          primary: 'hsl(var(--foreground))',
+          secondary: 'hsl(var(--card))',
+        },
+      })
       onClose()
       await onSaved()
     } catch (error) {
