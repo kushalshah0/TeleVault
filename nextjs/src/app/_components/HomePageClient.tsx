@@ -540,8 +540,8 @@ export default function HomePage() {
                         </div>
                         <h3 className="font-semibold text-foreground text-sm">Share Created!</h3>
                         <p className="text-xs text-muted-foreground mt-1 mb-4">Share this code with anyone</p>
-                        <div className="w-full flex items-center gap-2 bg-muted/50 rounded-xl px-4 py-3 mb-3 border border-border/50">
-                          <span className="flex-1 text-foreground font-mono font-bold tracking-[0.3em] text-center text-base">
+                        <div className="flex items-center gap-2 bg-muted/50 rounded-xl px-4 py-3 mb-3 border border-border/50 mx-auto">
+                          <span className="text-foreground font-mono font-bold tracking-[0.3em] text-center text-base">
                             {shareCode}
                           </span>
                           <button onClick={copyCode} className="p-1.5 rounded-lg hover:bg-accent text-muted-foreground hover:text-foreground transition-colors flex-shrink-0">
