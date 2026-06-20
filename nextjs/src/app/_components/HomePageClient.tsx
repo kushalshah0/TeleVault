@@ -851,18 +851,18 @@ export default function HomePage() {
         <div className="px-4 sm:px-6 lg:px-8 py-10 sm:py-14">
           <div className="max-w-7xl mx-auto lg:grid lg:grid-cols-5 lg:gap-8 xl:gap-12">
             <div className="lg:col-span-2 mb-8 lg:mb-0">
-              <h2 className="text-lg font-semibold text-foreground mb-6">Why TeleVault?</h2>
+              <h2 className="text-lg font-semibold text-foreground mb-4">Why TeleVault?</h2>
               <div className="space-y-3">
-                <div className="rounded-xl border border-border/60 bg-card p-3.5 flex items-start gap-3">
+                <div className="rounded-xl border border-border/60 bg-card p-4 flex items-start gap-3">
                   <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0 mt-0.5">
                     <Zap className="w-4 h-4 text-primary" />
                   </div>
                   <div>
                     <p className="text-sm font-medium text-foreground">Upload to Telegram</p>
-                    <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">Your files are stored in your own Telegram channels — no cloud lock-in.</p>
+                    <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">Files live in your Telegram channels — you stay in control.</p>
                   </div>
                 </div>
-                <div className="rounded-xl border border-border/60 bg-card p-3.5 flex items-start gap-3">
+                <div className="rounded-xl border border-border/60 bg-card p-4 flex items-start gap-3">
                   <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0 mt-0.5">
                     <Link2 className="w-4 h-4 text-primary" />
                   </div>
@@ -871,7 +871,7 @@ export default function HomePage() {
                     <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">Generate share codes in seconds. Recipients don&apos;t need an account.</p>
                   </div>
                 </div>
-                <div className="rounded-xl border border-border/60 bg-card p-3.5 flex items-start gap-3">
+                <div className="rounded-xl border border-border/60 bg-card p-4 flex items-start gap-3">
                   <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0 mt-0.5">
                     <Shield className="w-4 h-4 text-primary" />
                   </div>
@@ -880,7 +880,7 @@ export default function HomePage() {
                     <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">No third-party servers. End-to-end encrypted transfer via Telegram.</p>
                   </div>
                 </div>
-                <div className="rounded-xl border border-border/60 bg-card p-3.5 flex items-start gap-3">
+                <div className="rounded-xl border border-border/60 bg-card p-4 flex items-start gap-3">
                   <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0 mt-0.5">
                     <Clock className="w-4 h-4 text-primary" />
                   </div>
@@ -889,7 +889,7 @@ export default function HomePage() {
                     <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">Self-destructing shares with expiry times and download limits.</p>
                   </div>
                 </div>
-                <div className="rounded-xl border border-border/60 bg-card p-3.5 flex items-start gap-3">
+                <div className="rounded-xl border border-border/60 bg-card p-4 flex items-start gap-3">
                   <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0 mt-0.5">
                     <Globe className="w-4 h-4 text-primary" />
                   </div>
