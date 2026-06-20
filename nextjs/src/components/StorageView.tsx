@@ -1401,6 +1401,7 @@ function StorageView({ onFileOperation, searchQuery, searchTrigger, onClearSearc
                   <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 text-center">
                     Folder
                   </p>
+                  <div className="h-4 mt-1"></div>
                 </div>
               </div>
             </Card>
@@ -1432,6 +1433,11 @@ function StorageView({ onFileOperation, searchQuery, searchTrigger, onClearSearc
                   <Square className="w-4 h-4 text-muted-foreground" />
                 )}
               </button>
+              {file.is_public && (
+                <div className="absolute top-2 right-2 z-10 p-0.5 rounded bg-background/80 dark:bg-background/60 backdrop-blur-sm">
+                  <Globe className="w-3.5 h-3.5 text-blue-500 dark:text-blue-400" title="Public" />
+                </div>
+              )}
               <div className="p-4 flex flex-col items-center">
                 <div className="mb-2 sm:mb-3 transform group-hover:scale-110 transition-transform">
                   <FileIcon mimeType={file.mime_type} size="lg" />
@@ -1445,12 +1451,6 @@ function StorageView({ onFileOperation, searchQuery, searchTrigger, onClearSearc
                   <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 text-center">
                     {formatFileSize(file.size)}
                   </p>
-                  {file.is_public && (
-                    <span className="inline-flex items-center gap-1 mt-1 text-[10px] font-medium text-blue-600 dark:text-blue-400">
-                      <Globe className="w-2.5 h-2.5" />
-                      Public
-                    </span>
-                  )}
                 </div>
               </div>
             </Card>
