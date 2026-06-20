@@ -86,6 +86,24 @@ function getFileExtension(filename: string): string {
   return filename.split('.').pop()?.toLowerCase() || ''
 }
 
+function parseExpiryMs(value: string): number {
+  const match = value.match(/^(\d+)(m|h|d)$/)
+  if (!match) return 3600000
+  const n = parseInt(match[1])
+  if (match[2] === 'm') return n * 60 * 1000
+  if (match[2] === 'h') return n * 3600 * 1000
+  return n * 86400 * 1000
+}
+
+function formatTimeLeft(ms: number): string {
+  const total = Math.floor(ms / 1000)
+  const m = Math.floor(total / 60)
+  const s = total % 60
+  if (m >= 60) return `${Math.floor(m / 60)}h ${m % 60}m`
+  if (m > 0) return `${m}m ${s}s`
+  return `${s}s`
+}
+
 function formatExpiresIn(dateString: string | null): string {
   if (!dateString) return 'Never'
   const diffMs = new Date(dateString).getTime() - Date.now()
@@ -179,6 +197,8 @@ export default function HomePage() {
   const [shareCode, setShareCode] = useState('')
   const [copied, setCopied] = useState(false)
   const [dragOver, setDragOver] = useState(false)
+  const [expiresAt, setExpiresAt] = useState<number | null>(null)
+  const [timeLeft, setTimeLeft] = useState(0)
 
   // Download state
   const [claimCode, setClaimCode] = useState('')
@@ -197,6 +217,31 @@ export default function HomePage() {
     const id = setInterval(() => setTick(t => t + 1), 1000)
     return () => clearInterval(id)
   }, [shareInfo])
+
+  // Restore done state from sessionStorage on mount
+  useEffect(() => {
+    const saved = sessionStorage.getItem('shareDone')
+    if (!saved) return
+    try {
+      const { code, expiry } = JSON.parse(saved)
+      if (expiry > Date.now()) {
+        setShareCode(code)
+        setExpiresAt(expiry)
+        setUploadState('done')
+      } else {
+        sessionStorage.removeItem('shareDone')
+      }
+    } catch {}
+  }, [])
+
+  // Countdown tick
+  useEffect(() => {
+    if (uploadState !== 'done' || !expiresAt) return
+    const update = () => setTimeLeft(Math.max(0, expiresAt - Date.now()))
+    update()
+    const id = setInterval(update, 1000)
+    return () => clearInterval(id)
+  }, [uploadState, expiresAt])
 
   useEffect(() => {
     if (files.length === 0) fetchFiles({ limit: 7 })
@@ -328,8 +373,11 @@ export default function HomePage() {
         throw new Error(data.error || 'Finalize failed')
       }
       const { code } = await finalizeRes.json()
+      const expiry = Date.now() + parseExpiryMs(expiresIn)
       setShareCode(code)
+      setExpiresAt(expiry)
       setUploadState('done')
+      sessionStorage.setItem('shareDone', JSON.stringify({ code, expiry }))
     } catch (err) {
       setUploadError(err instanceof Error ? err.message : 'Upload failed')
       setUploadState('error')
@@ -360,10 +408,13 @@ export default function HomePage() {
     setUploadFiles([])
     setUploadState('idle')
     setShareCode('')
+    setExpiresAt(null)
+    setTimeLeft(0)
     setUploadError('')
     setProgress({ current: 0, total: 0 })
     setPassword('')
     setMaxDownloads('')
+    sessionStorage.removeItem('shareDone')
   }
 
   // Download handlers
@@ -539,7 +590,18 @@ export default function HomePage() {
                           <Check className="w-6 h-6 text-success" />
                         </div>
                         <h3 className="font-semibold text-foreground text-sm">Share Created!</h3>
-                        <p className="text-xs text-muted-foreground mt-1 mb-4">Share this code with anyone</p>
+                        <p className="text-xs text-muted-foreground mt-1">Share this code with anyone</p>
+                        {timeLeft > 0 ? (
+                          <p className="text-xs text-muted-foreground mb-4 mt-1 flex items-center gap-1 justify-center">
+                            <Clock className="w-3 h-3" />
+                            Expires in {formatTimeLeft(timeLeft)}
+                          </p>
+                        ) : (
+                          <p className="text-xs text-destructive mb-4 mt-1 flex items-center gap-1 justify-center font-medium">
+                            <Clock className="w-3 h-3" />
+                            Expired
+                          </p>
+                        )}
                         <div className="flex items-center gap-2 bg-muted/50 rounded-xl px-4 py-3 mb-3 border border-border/50 mx-auto">
                           <span className="text-foreground font-mono font-bold tracking-[0.3em] text-center text-base">
                             {shareCode}
