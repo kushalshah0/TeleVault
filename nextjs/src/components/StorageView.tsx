@@ -1435,7 +1435,7 @@ function StorageView({ onFileOperation, searchQuery, searchTrigger, onClearSearc
               </button>
               {file.is_public && (
                 <div className="absolute top-2 right-2 z-10 p-0.5 rounded bg-background/80 dark:bg-background/60 backdrop-blur-sm">
-                  <Globe className="w-3.5 h-3.5 text-blue-500 dark:text-blue-400" title="Public" />
+                  <Globe className="w-3.5 h-3.5 text-blue-500 dark:text-blue-400" aria-label="Public" />
                 </div>
               )}
               <div className="p-4 flex flex-col items-center">
@@ -1578,7 +1578,7 @@ function StorageView({ onFileOperation, searchQuery, searchTrigger, onClearSearc
                   <FileIcon mimeType={file.mime_type} size="sm" className="flex-shrink-0" />
                   <span className="font-medium text-sm text-foreground truncate">{file.name}</span>
                   {file.is_public && (
-                    <Globe className="w-3.5 h-3.5 text-blue-500 dark:text-blue-400 flex-shrink-0" title="Public" />
+                    <Globe className="w-3.5 h-3.5 text-blue-500 dark:text-blue-400 flex-shrink-0" aria-label="Public" />
                   )}
                 </div>
                 <div className="hidden sm:flex sm:col-span-2 items-center text-sm text-muted-foreground">{formatFileSize(file.size)}</div>
