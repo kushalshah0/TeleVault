@@ -84,9 +84,6 @@ function MainLayout({
               : children
             }
           </div>
-          <div className="border-t border-border px-4 sm:px-6 lg:px-8 py-3 text-center text-xs text-muted-foreground flex-shrink-0">
-            &copy; {new Date().getFullYear()} TeleVault
-          </div>
         </main>
       </div>
     </div>
