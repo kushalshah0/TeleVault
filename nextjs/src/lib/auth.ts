@@ -4,7 +4,7 @@
 import { SignJWT, jwtVerify } from 'jose'
 import { cookies } from 'next/headers'
 import { NextRequest } from 'next/server'
-import bcrypt from 'bcryptjs'
+import bcrypt from 'bcrypt'
 import { JWTPayload } from '@/types'
 
 const JWT_SECRET = new TextEncoder().encode(
