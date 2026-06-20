@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef, useCallback, ChangeEvent, DragEvent, FormEvent, MouseEvent } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import toast from 'react-hot-toast';
-import { Eye, Download, Share2, Pencil, Trash2, FolderOpen, CheckSquare, Square } from 'lucide-react';
+import { Eye, Download, Share2, Pencil, Trash2, FolderOpen, CheckSquare, Square, Globe } from 'lucide-react';
 import { storageAPI, folderAPI, fileAPI } from '@/utils/api-client';
 import { LoadingSkeleton, Spinner, Loader } from './ModernLoader';
 import FilePreview from './FilePreview';
@@ -67,6 +67,7 @@ function StorageView({ onFileOperation, searchQuery, searchTrigger, onClearSearc
   const [navigating, setNavigating] = useState(false);
   const [previewFile, setPreviewFile] = useState<any>(null);
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [filterMode, setFilterMode] = useState<'all' | 'public' | 'private'>('all');
   const [isDragging, setIsDragging] = useState(false);
   const clickTimerRef = useRef<NodeJS.Timeout | null>(null);
   const [downloading, setDownloading] = useState(false);
@@ -869,7 +870,8 @@ function StorageView({ onFileOperation, searchQuery, searchTrigger, onClearSearc
 
   // Determine which folders and files to display
   const displayFolders = isSearching && searchResults.folders ? searchResults.folders : (folders || []);
-  const displayFiles = isSearching && searchResults.files ? searchResults.files : (files || []);
+  const displayFiles = (isSearching && searchResults.files ? searchResults.files : (files || []))
+    .filter(f => filterMode === 'all' ? true : filterMode === 'public' ? f.is_public : !f.is_public);
   const hasContent = displayFolders.length > 0 || displayFiles.length > 0;
 
   const allItems = [
@@ -933,6 +935,38 @@ function StorageView({ onFileOperation, searchQuery, searchTrigger, onClearSearc
 
           <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
             <ViewModeToggle viewMode={viewMode} onChange={setViewMode} />
+
+            {/* Filter buttons */}
+            <div className="flex items-center gap-1 bg-muted rounded-lg p-0.5">
+              <button
+                onClick={() => setFilterMode('all')}
+                className={`px-2.5 py-1.5 text-xs font-medium rounded-md transition-colors ${filterMode === 'all'
+                  ? 'bg-background text-foreground shadow-sm'
+                  : 'text-muted-foreground hover:text-foreground'
+                  }`}
+              >
+                All
+              </button>
+              <button
+                onClick={() => setFilterMode('public')}
+                className={`flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium rounded-md transition-colors ${filterMode === 'public'
+                  ? 'bg-background text-foreground shadow-sm'
+                  : 'text-muted-foreground hover:text-foreground'
+                  }`}
+              >
+                <Globe className="w-3 h-3" />
+                Public
+              </button>
+              <button
+                onClick={() => setFilterMode('private')}
+                className={`px-2.5 py-1.5 text-xs font-medium rounded-md transition-colors ${filterMode === 'private'
+                  ? 'bg-background text-foreground shadow-sm'
+                  : 'text-muted-foreground hover:text-foreground'
+                  }`}
+              >
+                Private
+              </button>
+            </div>
 
             {/* New Folder Button - Only for owner, admin, editor */}
             {['OWNER', 'ADMIN', 'EDITOR'].includes(userRole) && (
@@ -1411,6 +1445,12 @@ function StorageView({ onFileOperation, searchQuery, searchTrigger, onClearSearc
                   <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 text-center">
                     {formatFileSize(file.size)}
                   </p>
+                  {file.is_public && (
+                    <span className="inline-flex items-center gap-1 mt-1 text-[10px] font-medium text-blue-600 dark:text-blue-400">
+                      <Globe className="w-2.5 h-2.5" />
+                      Public
+                    </span>
+                  )}
                 </div>
               </div>
             </Card>
@@ -1513,7 +1553,10 @@ function StorageView({ onFileOperation, searchQuery, searchTrigger, onClearSearc
                   <FileIcon mimeType={file.mime_type} size="md" className="flex-shrink-0" />
                   <div className="flex-1 min-w-0">
                     <div className="font-medium text-sm text-foreground truncate">{file.name}</div>
-                    <div className="text-xs text-muted-foreground">{formatFileSize(file.size)} • {formatDate(file.created_at)}</div>
+                    <div className="text-xs text-muted-foreground">
+                      {formatFileSize(file.size)} • {formatDate(file.created_at)}
+                      {file.is_public && <span className="ml-1.5 text-blue-500 dark:text-blue-400">• Public</span>}
+                    </div>
                   </div>
                 </div>
 
@@ -1534,6 +1577,9 @@ function StorageView({ onFileOperation, searchQuery, searchTrigger, onClearSearc
                   </button>
                   <FileIcon mimeType={file.mime_type} size="sm" className="flex-shrink-0" />
                   <span className="font-medium text-sm text-foreground truncate">{file.name}</span>
+                  {file.is_public && (
+                    <Globe className="w-3.5 h-3.5 text-blue-500 dark:text-blue-400 flex-shrink-0" title="Public" />
+                  )}
                 </div>
                 <div className="hidden sm:flex sm:col-span-2 items-center text-sm text-muted-foreground">{formatFileSize(file.size)}</div>
                 <div className="hidden sm:flex sm:col-span-2 items-center text-sm text-muted-foreground">{formatDate(file.created_at)}</div>
