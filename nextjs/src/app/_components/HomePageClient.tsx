@@ -625,7 +625,7 @@ export default function HomePage() {
                           </div>
                         )}
 
-              <div className="space-y-3 overflow-y-auto">
+                        <div className="space-y-3">
                           <div>
                             <p className="text-[11px] font-medium text-muted-foreground mb-1.5">Expires in</p>
                             <div className="flex flex-wrap gap-1.5">
@@ -850,7 +850,7 @@ export default function HomePage() {
       <section className="border-t border-border">
         <div className="px-4 sm:px-6 lg:px-8 py-10 sm:py-14">
           <div className="max-w-7xl mx-auto lg:grid lg:grid-cols-5 lg:gap-8 xl:gap-12">
-            <div className="lg:col-span-2 mb-8 lg:mb-0 lg:h-[380px]">
+            <div className="lg:col-span-2 mb-8 lg:mb-0">
               <h2 className="text-lg font-semibold text-foreground mb-6">Why TeleVault?</h2>
               <div className="space-y-3">
                 <div className="rounded-xl border border-border/60 bg-card p-3.5 flex items-start gap-3">
@@ -900,8 +900,8 @@ export default function HomePage() {
                 </div>
               </div>
             </div>
-            <div className="lg:col-span-3 lg:h-[380px] flex flex-col">
-              <div className="flex items-center gap-2 mb-4 flex-shrink-0">
+            <div className="lg:col-span-3">
+              <div className="flex items-center gap-2 mb-4">
                 <Clock className="w-4 h-4 text-muted-foreground" />
                 <h2 className="text-lg font-semibold text-foreground flex-1">Recent uploads</h2>
                 <Link
@@ -912,7 +912,7 @@ export default function HomePage() {
                   <ChevronRight className="w-3 h-3" />
                 </Link>
               </div>
-              <div className="divide-y divide-border rounded-xl border border-border overflow-hidden flex-1 overflow-y-auto">
+              <div className="divide-y divide-border rounded-xl border border-border overflow-hidden">
                 {loading ? (
                   <div className="flex justify-center py-16"><Loader /></div>
                 ) : files.length === 0 ? (
