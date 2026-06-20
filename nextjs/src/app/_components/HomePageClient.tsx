@@ -489,17 +489,17 @@ export default function HomePage() {
                 Upload, organize, and share files securely using your Telegram channels.
                 No third-party servers, no hidden fees.
               </p>
-              <div className="flex items-center justify-center lg:justify-start gap-3 mt-6">
+              <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-3 mt-6">
                 <Link
                   href="/login"
-                  className="px-5 py-2.5 rounded-lg bg-primary text-primary-foreground font-medium hover:bg-primary/90 transition-colors inline-flex items-center gap-2 shadow-lg shadow-primary/25"
+                  className="w-full sm:w-auto px-5 py-2.5 rounded-lg bg-primary text-primary-foreground font-medium hover:bg-primary/90 transition-colors inline-flex items-center justify-center gap-2 shadow-lg shadow-primary/25"
                 >
                   Get started
                   <ArrowRight className="w-4 h-4" />
                 </Link>
                 <Link
                   href="/recents"
-                  className="px-5 py-2.5 rounded-lg border border-border text-foreground font-medium hover:bg-accent transition-colors inline-flex items-center gap-2"
+                  className="w-full sm:w-auto px-5 py-2.5 rounded-lg border border-border text-foreground font-medium hover:bg-accent transition-colors inline-flex items-center justify-center gap-2"
                 >
                   <Clock className="w-4 h-4" />
                   Recent uploads
@@ -848,9 +848,9 @@ export default function HomePage() {
 
       {/* Features + Recent Uploads */}
       <section className="border-t border-border">
-        <div className="px-4 sm:px-6 lg:px-8 py-10 sm:py-14">
-          <div className="max-w-7xl mx-auto lg:grid lg:grid-cols-5 lg:gap-8 xl:gap-12">
-            <div className="lg:col-span-2 mb-8 lg:mb-0">
+        <div className="px-4 sm:px-6 lg:px-8 py-6 sm:py-14">
+          <div className="max-w-7xl mx-auto flex flex-col-reverse gap-6 lg:grid lg:grid-cols-5 lg:gap-8 xl:gap-12">
+            <div className="lg:col-span-2 mb-4 lg:mb-0">
               <h2 className="text-lg font-semibold text-foreground mb-4">Why TeleVault?</h2>
               <div className="space-y-3">
                 <div className="rounded-xl border border-border/60 bg-card p-4 flex items-start gap-3">
