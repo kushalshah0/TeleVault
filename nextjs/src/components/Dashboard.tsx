@@ -204,7 +204,7 @@ function Dashboard({ onStorageCreated, storages: initialStorages = [], onRefresh
           }
         />
       ) : viewMode === 'grid' ? (
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-7 gap-4">
+        <div className="grid grid-cols-[repeat(auto-fill,minmax(140px,1fr))] gap-4">
           {storages.map((storage) => {
             const stats = getStorageStats(storage);
             const isSelected = selectedStorage?.id === storage.id;
@@ -217,17 +217,17 @@ function Dashboard({ onStorageCreated, storages: initialStorages = [], onRefresh
                 onClick={(e) => handleStorageClick(e, storage)}
               >
                 {/* Centered vertical layout for grid view */}
-                <div className="flex flex-col items-center text-center space-y-3 py-2">
-                  <div className="w-16 h-16 rounded-lg bg-gradient-to-br from-primary/20 to-primary/10 flex items-center justify-center">
-                    <svg className="w-8 h-8 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className="flex flex-col items-center text-center space-y-2 py-3 px-1 select-none">
+                  <div className="w-14 h-14 rounded-lg bg-gradient-to-br from-primary/20 to-primary/10 flex items-center justify-center">
+                    <svg className="w-7 h-7 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z" />
                     </svg>
                   </div>
-                  <div className="w-full px-2">
-                    <h3 className="font-semibold text-foreground truncate">
+                  <div className="w-full px-1">
+                    <h3 className="font-semibold text-foreground truncate text-sm">
                       {storage.name}
                     </h3>
-                    <p className="text-xs text-muted-foreground mt-1">
+                    <p className="text-xs text-muted-foreground mt-0.5">
                       {formatDate(storage.created_at)}
                     </p>
                   </div>
