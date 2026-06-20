@@ -170,7 +170,7 @@ export default function HomePage() {
 
   // Upload state
   const [uploadFiles, setUploadFiles] = useState<SelectedFile[]>([])
-  const [expiresIn, setExpiresIn] = useState('1h')
+  const [expiresIn, setExpiresIn] = useState('5m')
   const [password, setPassword] = useState('')
   const [maxDownloads, setMaxDownloads] = useState('')
   const [uploadState, setUploadState] = useState<UploadState>('idle')
@@ -337,20 +337,18 @@ export default function HomePage() {
   }
 
   const copyCode = async () => {
-    const url = `${window.location.origin}/?claim=${shareCode}`
     try {
-      await navigator.clipboard.writeText(url)
+      await navigator.clipboard.writeText(shareCode)
       setCopied(true)
       setTimeout(() => setCopied(false), 2000)
     } catch {
       const input = document.createElement('input')
-      input.value = url
+      input.value = shareCode
       document.body.appendChild(input)
       input.select()
       try {
         document.execCommand('copy')
       } catch {
-        // Fallback failed, clipboard API should have worked
       }
       document.body.removeChild(input)
       setCopied(true)
@@ -541,14 +539,13 @@ export default function HomePage() {
                           <Check className="w-6 h-6 text-success" />
                         </div>
                         <h3 className="font-semibold text-foreground text-sm">Share Created!</h3>
-                        <p className="text-xs text-muted-foreground mt-1 mb-4">Share this link with anyone</p>
-                        <div className="w-full flex items-center gap-1.5 bg-muted/50 rounded-lg px-3 py-2.5 mb-3 text-xs border border-border/50">
-                          <Link2 className="w-3.5 h-3.5 text-muted-foreground flex-shrink-0" />
-                          <span className="flex-1 text-foreground font-mono truncate">
-                            {typeof window !== 'undefined' ? window.location.origin : ''}/?claim={shareCode}
+                        <p className="text-xs text-muted-foreground mt-1 mb-4">Share this code with anyone</p>
+                        <div className="w-full flex items-center gap-2 bg-muted/50 rounded-xl px-4 py-3 mb-3 border border-border/50">
+                          <span className="flex-1 text-foreground font-mono font-bold tracking-[0.3em] text-center text-base">
+                            {shareCode}
                           </span>
-                          <button onClick={copyCode} className="p-1 rounded-lg hover:bg-accent text-muted-foreground hover:text-foreground transition-colors flex-shrink-0">
-                            {copied ? <Check className="w-3.5 h-3.5 text-success" /> : <Copy className="w-3.5 h-3.5" />}
+                          <button onClick={copyCode} className="p-1.5 rounded-lg hover:bg-accent text-muted-foreground hover:text-foreground transition-colors flex-shrink-0">
+                            {copied ? <Check className="w-4 h-4 text-success" /> : <Copy className="w-4 h-4" />}
                           </button>
                         </div>
                         <button onClick={resetUpload} className="text-xs text-primary hover:text-primary/80 font-medium transition-colors">
