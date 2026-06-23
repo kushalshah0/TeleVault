@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Document, Page, pdfjs } from 'react-pdf';
 import { Loader } from './ModernLoader';
 import { AlertCircle, ChevronLeft, ChevronRight } from 'lucide-react';
@@ -14,10 +14,25 @@ interface PdfViewerProps {
 export default function PdfViewer({ previewUrl }: PdfViewerProps) {
   const [numPages, setNumPages] = useState<number | null>(null);
   const [pageNumber, setPageNumber] = useState(1);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [pageWidth, setPageWidth] = useState(600);
+
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    const observer = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        const w = entry.contentRect.width - 32;
+        if (w > 0) setPageWidth(w);
+      }
+    });
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
 
   return (
     <div className="w-full h-[400px] sm:h-[600px] bg-gray-50 dark:bg-gray-900 rounded-lg flex flex-col overflow-hidden">
-      <div className="flex-1 flex items-center justify-center overflow-auto p-2">
+      <div ref={containerRef} className="flex-1 flex items-start justify-center overflow-auto p-2">
         <Document
           file={previewUrl}
           onLoadSuccess={({ numPages: pages }) => setNumPages(pages)}
@@ -33,6 +48,7 @@ export default function PdfViewer({ previewUrl }: PdfViewerProps) {
             pageNumber={pageNumber}
             renderTextLayer={false}
             renderAnnotationLayer={false}
+            width={pageWidth}
             className="shadow-sm"
           />
         </Document>
